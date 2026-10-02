@@ -20,11 +20,32 @@ Dépendances : `pip install numpy scipy opencv-python-headless pillow` + ffmpeg.
 | 0 – 1,7 s | Intro motion design : logo qui déploie ses ailes, reflet, « BLUE HOPE / ESPORT » lettre par lettre, sur le pré-kill de Jetax ralenti et assombri |
 | 1,7 s | DROP : one tap (c4) + flash, « ONE TAP » |
 | 2,6 – 12 s | Kills calés sur les temps forts (ralentis fluides par interpolation optique), multi-kills Sheriff et Vandal, clutch violet + « CLUTCH » |
-| 12 – 15,4 s | La musique se coupe (tape stop) : kill final + cri du caster « OUI ! OUI ! » |
+| 12 – 15,4 s | La musique se coupe (tape stop) : kill final, puis écran partagé avec la cam du caster qui crie « OUI ! OUI ! » |
 | 15,4 – 17,8 s | Outro : logo BLUE HOPE sur le dernier temps fort |
 
+### Qualité d'image : upscaling IA
+
+Les clips Twitch (720p pour 3 d'entre eux, très compressés) sont agrandis ×4 avec
+**Real-ESRGAN** (`realesr-general-x4v3`, débruitage 0,5) avant le recadrage vertical.
+`sr.py` lit les poids officiels `.pth` sans PyTorch, reconstruit le réseau en ONNX et
+l'exécute sur CPU avec onnxruntime.
+
 ```
+mkdir -p models && cd models
+for f in realesr-general-x4v3.pth realesr-general-wdn-x4v3.pth; do
+  curl -LO https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/$f
+done
+```
+
+### Rendu
+
+```
+pip install numpy scipy opencv-python-headless pillow onnx onnxruntime
 python3 bluehope_audio.py   # musique + sfx
-python3 bluehope.py         # rendu -> bluehope_edit.mp4 (les clips sources vont dans clips/c1..c4.mp4)
+python3 prepare_sr.py       # upscaling IA des images utilisées -> cache/sr/ (~45 min CPU, reprise possible)
+python3 bluehope.py         # rendu -> bluehope_edit.mp4 (clips sources dans clips/c1..c4.mp4)
 python3 bluehope.py --stills 1.0 3.5   # aperçus dans work/
 ```
+
+Final (12,6 – 15,4 s) : écran partagé, la cam du caster (zone 62–432 × 0–276 px du clip c1)
+arrive en haut et réagit au volume de sa voix, le gameplay passe en bas.

@@ -1,3 +1,5 @@
 clips/
 work/
 __pycache__/
+cache/
+models/

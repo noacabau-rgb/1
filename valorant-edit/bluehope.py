@@ -5,6 +5,7 @@
     python3 bluehope.py --stills 0.5 1.8 ...   # preview frames -> work/
 """
 import json
+import os
 import subprocess
 import sys
 import numpy as np
@@ -17,6 +18,7 @@ TM = json.load(open("audio/bh_timing.json"))
 BEAT, TOTAL, KICKS = TM["beat"], TM["total"], TM["kicks"]
 B = lambda n: n * BEAT
 DROP, OUTRO = B(4), B(36)
+CAM_IN = 12.62          # output time the caster-cam split screen comes in
 
 # brand colours (BGR)
 BLUE = np.array([246, 158, 6], np.float32)      # #069EF6
@@ -27,17 +29,17 @@ CLIPS = {k: f"clips/{k}.mp4" for k in ("c1", "c2", "c3", "c4")}
 
 # kill / shot times are in SOURCE seconds, read frame-by-frame from the clips
 SEGMENTS = [
-    dict(clip="c4", beats=6, kill=6.716, kill_beat=4, shots=[6.716], zoom=1.12, game=0.25,
+    dict(clip="c4", beats=6, kill=6.716, kill_beat=4, shots=[6.716], zoom=1.06, game=0.25,
          ramp=[[0, .45], [.64, .45], [.667, 1.0], [1, 1.0]], text=("ONE TAP", 0.0, 0.85)),
-    dict(clip="c1", beats=4, kill=1.30, kill_beat=2, shots=[1.233, 1.30, 1.433, 1.533], zoom=1.15, trans="whip",
+    dict(clip="c1", beats=4, kill=1.30, kill_beat=2, shots=[1.233, 1.30, 1.433, 1.533], zoom=1.08, trans="whip",
          ramp=[[0, 1.25], [.4, 1.1], [.5, .3], [.78, .3], [.9, 1.0], [1, 1.0]]),
-    dict(clip="c3", beats=4, src_in=4.38, speed=1.0, shots=[4.466, 4.733, 4.933, 5.20, 5.466, 5.75], zoom=1.32, trans="glitch"),
-    dict(clip="c1", beats=4, kill=8.466, kill_beat=2, shots=[8.466], zoom=1.12, trans="zoom",
+    dict(clip="c3", beats=4, src_in=4.38, speed=1.0, shots=[4.466, 4.733, 4.933, 5.20, 5.466, 5.75], zoom=1.24, trans="glitch"),
+    dict(clip="c1", beats=4, kill=8.466, kill_beat=2, shots=[8.466], zoom=1.06, trans="zoom",
          ramp=[[0, 1.2], [.42, 1.0], [.5, .28], [.8, .28], [.92, 1.0], [1, 1.0]]),
-    dict(clip="c2", beats=4, src_in=5.22, speed=0.78, shots=[5.333, 5.533, 5.80, 6.00, 6.20, 6.30], zoom=1.34, trans="wipe"),
-    dict(clip="c4", beats=6, kill=9.80, kill_beat=2, shots=[9.633, 9.80], zoom=1.12, trans="whip",
+    dict(clip="c2", beats=4, src_in=5.22, speed=0.78, shots=[5.333, 5.533, 5.80, 6.00, 6.20, 6.30], zoom=1.26, trans="wipe"),
+    dict(clip="c4", beats=6, kill=9.80, kill_beat=2, shots=[9.633, 9.80], zoom=1.06, trans="whip",
          ramp=[[0, 1.1], [.3, 1.0], [.333, .35], [.68, .35], [.8, 1.0], [1, 1.0]], text=("CLUTCH", 0.05, 0.95)),
-    dict(clip="c1", beats=8, kill=12.0, kill_beat=1, shots=[11.966, 12.0], zoom=1.1, trans="zoom", game=0.72, speed=1.0),
+    dict(clip="c1", beats=8, kill=12.0, kill_beat=1, shots=[11.966, 12.0], zoom=1.04, trans="zoom", game=0.72, speed=1.0),
 ]
 
 
@@ -66,58 +68,26 @@ def load_audio(path):
     return np.frombuffer(raw, np.float32).copy()
 
 
-def probe_size(path):
-    out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height",
-                          "-of", "csv=p=0", path], capture_output=True, text=True).stdout.strip()
-    w, h = map(int, out.split(","))
-    return w, h
+class SRSource:
+    """Real-ESRGAN x4 frames pre-computed by prepare_sr.py (60 fps indices)."""
 
-
-class Stream:
-    """Sequential 60 fps decoder at native resolution with a tiny frame cache."""
-
-    def __init__(self, path, start, dur):
-        self.w, self.h = probe_size(path)
-        self.start = max(0.0, start)
-        self.p = subprocess.Popen(["ffmpeg", "-v", "error", "-ss", f"{self.start:.4f}", "-i", path, "-t", f"{dur:.4f}",
-                                   "-vf", "fps=60", "-f", "rawvideo", "-pix_fmt", "bgr24", "-"], stdout=subprocess.PIPE)
-        self.frames, self.next = {}, 0
+    def __init__(self, name):
+        self.dir = f"cache/sr/{name}"
+        self.frames = {}
 
     def get(self, i):
-        i = max(0, i)
-        size = self.w * self.h * 3
-        while self.next <= i:
-            buf = self.p.stdout.read(size)
-            if len(buf) < size:
-                break
-            self.frames[self.next] = np.frombuffer(buf, np.uint8).reshape(self.h, self.w, 3)
-            self.next += 1
-            for k in [k for k in self.frames if k < self.next - 3]:
-                del self.frames[k]
-        return self.frames.get(i, self.frames[max(self.frames)])
-
-    def close(self):
-        self.p.stdout.close()
-        self.p.kill()
+        if i not in self.frames:
+            if not os.path.exists(f"{self.dir}/{i:05d}.jpg"):  # should not happen: fall back to nearest
+                i = min((int(f[:5]) for f in os.listdir(self.dir)), key=lambda k: abs(k - i))
+            if len(self.frames) > 6:
+                self.frames.pop(next(iter(self.frames)))
+            self.frames[i] = cv2.imread(f"{self.dir}/{i:05d}.jpg")
+        return self.frames[i]
 
 
 DIS = cv2.DISOpticalFlow_create(cv2.DISOPTICAL_FLOW_PRESET_MEDIUM)
 _flow_cache = {}
 _grid_cache = {}
-
-
-def blockiness(f):
-    """>1 when 8x8 codec block edges dominate (Twitch clips smear on muzzle flashes)."""
-    g = cv2.cvtColor(f, cv2.COLOR_BGR2GRAY).astype(np.float32)
-    h, w = g.shape
-    g = g[h // 4:3 * h // 4, w // 3:2 * w // 3]
-    d, v = np.abs(np.diff(g, axis=1)), np.abs(np.diff(g, axis=0))
-    return (d[:, 7::8].mean() / (d.mean() + 1e-3) + v[7::8].mean() / (v.mean() + 1e-3)) / 2
-
-
-def deblock(f):
-    sigma = 0.6 + 2.2 * clamp((blockiness(f) - 1.08) / 0.15)
-    return cv2.GaussianBlur(f, (0, 0), sigma)
 
 
 def interpolated(stream, fpos):
@@ -133,9 +103,9 @@ def interpolated(stream, fpos):
     key = (id(stream), i0)
     if key not in _flow_cache:
         _flow_cache.clear()
-        g0 = cv2.cvtColor(cv2.resize(f0, None, fx=.5, fy=.5), cv2.COLOR_BGR2GRAY)
-        g1 = cv2.cvtColor(cv2.resize(f1, None, fx=.5, fy=.5), cv2.COLOR_BGR2GRAY)
-        up = lambda f: cv2.resize(f, (f0.shape[1], f0.shape[0])) * 2
+        g0 = cv2.cvtColor(cv2.resize(f0, None, fx=.25, fy=.25, interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2GRAY)
+        g1 = cv2.cvtColor(cv2.resize(f1, None, fx=.25, fy=.25, interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2GRAY)
+        up = lambda f: cv2.resize(f, (f0.shape[1], f0.shape[0])) * 4
         _flow_cache[key] = (up(DIS.calc(g0, g1, None)), up(DIS.calc(g1, g0, None)))
     f01, f10 = _flow_cache[key]
     h, w = f0.shape[:2]
@@ -271,34 +241,36 @@ def blit(img, layer, cx, cy, scale=1.0, alpha=1.0, add=False, mask_fn=None):
 
 # ── look ────────────────────────────────────────────────────
 _x = np.arange(256) / 255
-CURVE = np.clip(255 * (0.5 + 0.5 * np.tanh((_x - 0.48) * 2.9) / np.tanh(1.45)), 0, 255).astype(np.uint8)
+_lift = _x ** 0.78                                                    # brighter shadows & mids
+CURVE = np.clip(255 * 1.03 * (0.5 + 0.5 * np.tanh((_lift - 0.5) * 2.3) / np.tanh(1.15)), 0, 255).astype(np.uint8)
 _yy, _xx = np.mgrid[0:OH, 0:OW].astype(np.float32)
-VIGN = np.clip(1 - 0.5 * ((((_xx - OW / 2) / (OW * .62)) ** 2 + ((_yy - OH / 2) / (OH * .62)) ** 2) ** 1.5), .35, 1)[..., None]
+VIGN = np.clip(1 - 0.3 * ((((_xx - OW / 2) / (OW * .62)) ** 2 + ((_yy - OH / 2) / (OH * .62)) ** 2) ** 1.5), .5, 1)[..., None]
 RADIAL = (np.clip(1 - ((_xx - OW / 2) ** 2 + (_yy - OH * 0.40) ** 2) ** 0.5 / 900, 0, 1) ** 2)[..., None]
-GRAIN = [np.random.default_rng(i).normal(0, 4.0, (OH, OW, 1)).astype(np.float32) for i in range(6)]
+GRAIN = [np.random.default_rng(i).normal(0, 2.2, (OH, OW, 1)).astype(np.float32) for i in range(6)]
 
 
-def grade(img_u8, sat=1.42):
-    blur = cv2.GaussianBlur(img_u8, (0, 0), 1.8)
-    img = cv2.addWeighted(img_u8, 1.45, blur, -0.45, 0)                   # sharpen the upscale
-    img = cv2.LUT(img, CURVE)                                             # contrast S-curve
+def grade(img_u8, sat=1.38):
+    h, w = img_u8.shape[:2]
+    blur = cv2.GaussianBlur(img_u8, (0, 0), 1.2)
+    img = cv2.addWeighted(img_u8, 1.22, blur, -0.22, 0)                   # light crispening
+    img = cv2.LUT(img, CURVE)                                             # lift + contrast
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     hsv[..., 1] = cv2.multiply(hsv[..., 1], sat)
     img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR).astype(np.float32)
     lum = img.mean(axis=2, keepdims=True) / 255
-    img += (BLUE - img) * 0.10 * (1 - lum) ** 2                           # team-blue shadows
-    small = cv2.resize(img, (OW // 4, OH // 4), interpolation=cv2.INTER_AREA)
-    bright = np.clip(small - 165, 0, None)
-    bloom = cv2.resize(cv2.GaussianBlur(bright, (0, 0), 7), (OW, OH))
-    return img + bloom * 0.75
+    img += (BLUE - img) * 0.07 * (1 - lum) ** 2                           # team-blue shadows
+    small = cv2.resize(img, (w // 4, h // 4), interpolation=cv2.INTER_AREA)
+    bright = np.clip(small - 172, 0, None)
+    bloom = cv2.resize(cv2.GaussianBlur(bright, (0, 0), 7), (w, h))
+    return img + bloom * 0.7
 
 
 def radial_blur(img, amount, n=6):
+    h, w = img.shape[:2]
     acc = img.copy()
     for k in range(1, n):
-        s = 1 + amount * k / n
-        M = cv2.getRotationMatrix2D((OW / 2, OH / 2), 0, s)
-        acc += cv2.warpAffine(img, M, (OW, OH), borderMode=cv2.BORDER_REFLECT)
+        M = cv2.getRotationMatrix2D((w / 2, h / 2), 0, 1 + amount * k / n)
+        acc += cv2.warpAffine(img, M, (w, h), borderMode=cv2.BORDER_REFLECT)
     return acc / n
 
 
@@ -472,7 +444,7 @@ def watermark(img, t):
     slide = (1 - out_cubic(prog(t, DROP + 0.25, DROP + 0.6))) * -120
     blit(img, LOGO_SMALL, 52 + 48 + slide, 200, 1.0, a)
     blit(img, WM_TEXT, 52 + 104 + WM_TEXT[1].shape[1] / 2 + slide, 202, 1.0, a * 0.95)
-    corners(img, t, a * 0.85)
+    corners(img, t, a * 0.85 * (1 - prog(t, CAM_IN, CAM_IN + 0.2)))
 
 
 def text_pops(img, t):
@@ -492,17 +464,61 @@ def text_pops(img, t):
 
 
 # ── per-frame render ────────────────────────────────────────
+def rounded_mask(w, h, r):
+    r = int(max(0, min(r, w // 2, h // 2)))
+    m = np.zeros((h, w), np.uint8)
+    if r == 0:
+        m[:] = 255
+    else:
+        cv2.rectangle(m, (r, 0), (w - r - 1, h - 1), 255, -1)
+        cv2.rectangle(m, (0, r), (w - 1, h - r - 1), 255, -1)
+        for cx, cy in ((r, r), (w - r - 1, r), (r, h - r - 1), (w - r - 1, h - r - 1)):
+            cv2.circle(m, (cx, cy), r, 255, -1, cv2.LINE_AA)
+    return m.astype(np.float32) / 255
+
+
+def pill(text, fill=(6, 158, 246)):
+    tl = pil_text(text, CHAKRA, 40, fill=(255, 255, 255))
+    th, tw = tl[1].shape
+    w, h = tw + 96, th + 30
+    bgr = np.empty((h, w, 3), np.float32)
+    bgr[:] = np.array(fill[::-1], np.float32)
+    a = rounded_mask(w, h, h // 2)
+    cv2.circle(bgr, (34, h // 2), 11, (40, 40, 235), -1, cv2.LINE_AA)
+    bgr[15:15 + th, 62:62 + tw] = bgr[15:15 + th, 62:62 + tw] * (1 - tl[1][..., None]) + tl[0] * tl[1][..., None]
+    return bgr, a
+
+
+CAM_PANEL = (40, 250, 1000, 750)    # x, y, w, h  (caster cam, top)
+GAME_PANEL = (40, 1030, 1000, 740)  # gameplay, bottom
+CASTER_PILL = pill("CASTER")
+SCREAM = pil_text("OUI ! OUI !", ANTON, 150, stroke=9, stroke_fill=(8, 22, 48), spacing=3)
+SCREAM_GLOW = glow_of(SCREAM, 16, BLUE)
+
+
 class Renderer:
     def __init__(self):
-        self.streams = {}
+        from scipy.signal import butter, sosfilt
+        self.src = {c: SRSource(c) for c in CLIPS}
+        self.cam = SRSource("cam")
         self.freeze = None
+        # caster voice envelope (per 60 fps source frame) drives the cam panel's reactions
+        a = load_audio(CLIPS[SEGS[-1].clip])
+        v = sosfilt(butter(2, [300, 3000], "band", fs=SR, output="sos"), a)
+        hop = SR // FPS
+        r = np.sqrt(np.add.reduceat(v[: len(v) // hop * hop] ** 2, np.arange(0, len(v) // hop * hop, hop)) / hop)
+        env = np.zeros_like(r)
+        for i in range(len(r)):
+            env[i] = max(r[i], env[i - 1] * 0.86 if i else 0)
+        ref = np.percentile(env[int(12 * FPS):int(15 * FPS)], 92)
+        self.voice = np.clip(env / (ref + 1e-9), 0, 1.25)
 
-    def stream_for(self, seg):
-        if seg not in self.streams:
-            for s in list(self.streams):
-                self.streams.pop(s).close()
-            self.streams[seg] = Stream(CLIPS[seg.clip], seg.src_in - 0.1, seg.src_out - seg.src_in + 0.4)
-        return self.streams[seg]
+    def source_image(self, seg, t):
+        src = self.src[seg.clip]
+        fpos = seg.src_at(t) * FPS
+        if seg.speed_at(t) < 0.9:
+            return interpolated(src, fpos)
+        return src.get(int(round(fpos)))
 
     def camera(self, t, seg):
         u = (t - seg.t0) / seg.dur
@@ -518,12 +534,8 @@ class Renderer:
             sh += 0.25 * prog(t, B(2), DROP)
         return zoom, min(sh, 2.6)
 
-    def game_frame(self, t, f, seg):
-        st = self.stream_for(seg)
-        s = seg.src_at(t)
-        fpos = (s - st.start) * FPS
-        frame = interpolated(st, fpos) if seg.speed_at(t) < 0.9 else st.get(int(round(fpos)))
-        frame = deblock(frame)
+    def game_frame(self, t, f, seg, size=(OW, OH), panel=0.0):
+        frame = self.source_image(seg, t)
         zoom, sh = self.camera(t, seg)
         n = np.random.default_rng(f).normal(0, 1, 3)
         dx, dy, rot = n[0] * 20 * sh, n[1] * 20 * sh, n[2] * 0.8 * sh
@@ -541,13 +553,21 @@ class Renderer:
                 e = 1 - abs(d) / (0.1 if d < 0 else 0.12)
                 zoom *= 1 + (0.55 if d < 0 else 0.35) * e ** 2
                 rz = 0.28 * e
-        sw, shh = st.w, st.h
-        scale = OH * zoom / shh
-        fx, fy = sw / 2, shh / 2
-        M = cv2.getRotationMatrix2D((fx, fy), rot, scale)
-        M[0, 2] += OW / 2 - fx + dx + whip
-        M[1, 2] += OH / 2 - fy + dy
-        img = cv2.warpAffine(frame, M, (OW, OH), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT)
+        pw, ph = size
+        H, W = frame.shape[:2]
+        ch_full = H / zoom
+        ch_panel = (H * 5 / 9) / (zoom / seg.cfg.get("zoom", 1.1))   # wider framing inside the bottom panel
+        ch = ch_full + (ch_panel - ch_full) * panel
+        scale = ph / ch
+        pre = min(1.0, scale * 1.15)                 # area-downscale the 4x frame first: no aliasing
+        if pre < 0.98:
+            frame = cv2.resize(frame, None, fx=pre, fy=pre, interpolation=cv2.INTER_AREA)
+        H, W = frame.shape[:2]
+        fx, fy = W / 2, H / 2 + H * 0.055 * panel
+        M = cv2.getRotationMatrix2D((fx, fy), rot, scale / pre)
+        M[0, 2] += pw / 2 - fx + dx + whip
+        M[1, 2] += ph / 2 - fy + dy
+        img = cv2.warpAffine(frame, M, (pw, ph), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT)
         img = grade(img)
         if blur:
             img = h_blur(img, blur)
@@ -555,11 +575,70 @@ class Renderer:
             img = radial_blur(img, rz)
         return img
 
+    def finale(self, t, f, seg):
+        """Split screen: the caster's webcam flies in on top, gameplay shrinks to the bottom."""
+        e = out_expo(prog(t, CAM_IN, CAM_IN + 0.42))
+        lerp = lambda a, b, u: a + (b - a) * u
+        gx, gy, gw, gh = (lerp(a, b, e) for a, b in zip((0, 0, OW, OH), GAME_PANEL))
+        gw, gh = int(round(gw)), int(round(gh))
+        game = self.game_frame(t, f, seg, (gw, gh), e)
+        if e <= 0.001:
+            return game
+        bg = cv2.resize(cv2.GaussianBlur(cv2.resize(game, (gw // 8, gh // 8)), (0, 0), 3), (OW, OH))
+        img = bg * 0.3 + NAVY * 0.62
+        m = rounded_mask(gw, gh, 30 * e)[..., None]
+        x0, y0 = int(round(gx)), int(round(gy))
+        img[y0:y0 + gh, x0:x0 + gw] = img[y0:y0 + gh, x0:x0 + gw] * (1 - m) + game * m
+
+        sidx = int(round(seg.src_at(t) * FPS))
+        voice = float(self.voice[min(sidx, len(self.voice) - 1)])
+        ec = prog(t, CAM_IN + 0.04, CAM_IN + 0.5)
+        if ec > 0:
+            s, ep = out_back(ec, 1.4), out_expo(ec)
+            cxp, cyp, cwp, chp = CAM_PANEL
+            cw = max(40, int(lerp(280, cwp, s) * (1 + 0.035 * voice)))
+            chh = max(30, int(lerp(210, chp, s) * (1 + 0.035 * voice)))
+            ccx, ccy = lerp(150, cxp + cwp / 2, ep), lerp(190, cyp + chp / 2, ep)
+            jit = np.random.default_rng(f + 7).normal(0, 1, 3)
+            rot = -10 * (1 - out_cubic(ec)) + 0.9 * voice * jit[2]
+            cam = cv2.resize(self.cam.get(sidx), (cw, chh), interpolation=cv2.INTER_AREA)
+            cam = grade(cam, sat=1.15)
+            pad, bw = 40, 8
+            L = np.zeros((chh + 2 * pad, cw + 2 * pad, 3), np.float32)
+            A = np.zeros(L.shape[:2], np.float32)
+            rm = rounded_mask(cw, chh, 30)
+            L[pad:pad + chh, pad:pad + cw] = cam
+            A[pad:pad + chh, pad:pad + cw] = rm
+            ring_m = rounded_mask(cw + 2 * bw, chh + 2 * bw, 30 + bw)
+            ring_m[bw:bw + chh, bw:bw + cw] *= (1 - rm)
+            R = np.zeros_like(A)
+            R[pad - bw:pad + chh + bw, pad - bw:pad + cw + bw] = ring_m
+            L = L * (1 - R[..., None]) + BLUE * R[..., None]
+            A = np.maximum(A, R)
+            if abs(rot) > 0.05:
+                Mr = cv2.getRotationMatrix2D((L.shape[1] / 2, L.shape[0] / 2), rot, 1.0)
+                L = cv2.warpAffine(L, Mr, (L.shape[1], L.shape[0]), flags=cv2.INTER_LINEAR)
+                A = cv2.warpAffine(A, Mr, (A.shape[1], A.shape[0]), flags=cv2.INTER_LINEAR)
+                R = cv2.warpAffine(R, Mr, (R.shape[1], R.shape[0]), flags=cv2.INTER_LINEAR)
+            glow = cv2.GaussianBlur(R, (0, 0), 14)
+            glow = glow / (glow.max() + 1e-6)
+            px, py = ccx + jit[0] * 9 * voice, ccy + jit[1] * 9 * voice
+            blit(img, (np.ones_like(L) * LIGHT, glow), px, py, 1.0, (0.45 + 0.55 * min(voice, 1)) * min(1, ec * 2), add=True)
+            blit(img, (L, A), px, py, 1.0, 1.0)
+            blit(img, CASTER_PILL, px - cw / 2 + CASTER_PILL[1].shape[1] / 2 + 24, py - chh / 2, 1.0, prog(ec, 0.5, 1.0))
+        d = t - (CAM_IN + 0.3)
+        if d >= 0:
+            sc = (1 + 0.45 * np.exp(-d / 0.05) * np.cos(d * 45)) * (1 + 0.1 * voice)
+            a = min(1, d / 0.03) * (1 - prog(t, OUTRO - 0.12, OUTRO))
+            blit(img, SCREAM_GLOW, OW / 2, 1015, sc, a * 0.9, add=True)
+            blit(img, SCREAM, OW / 2, 1015, sc, a)
+        return img
+
     def frame(self, f):
         t = f / FPS
         if t < OUTRO:
             seg = next(s for s in SEGS if s.t0 <= t < s.t1)
-            img = self.game_frame(t, f, seg)
+            img = self.finale(t, f, seg) if seg is SEGS[-1] and t >= CAM_IN else self.game_frame(t, f, seg)
             if t >= OUTRO - 1.5 / FPS:
                 self.freeze = img.copy()
         else:
@@ -678,6 +757,7 @@ def mix_audio(path, audios):
     place(sfx["shimmer"], 0.1, 0.55)
     place(sfx["swoosh_rev"], DROP - 0.6, 0.6)
     place(sfx["shimmer"], OUTRO + 0.05, 0.5)
+    place(sfx["whoosh"], CAM_IN - 0.2, 0.6)
 
     mus_gain = np.ones(n, np.float32) * 0.74
     mix = music * mus_gain + game + fx
