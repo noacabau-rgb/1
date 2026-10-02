@@ -785,7 +785,7 @@ def main():
     nf = int(round(TOTAL * FPS))
     enc = subprocess.Popen(["ffmpeg", "-y", "-v", "error", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{OW}x{OH}",
                             "-r", str(FPS), "-i", "-", "-i", "work/bh_audio.wav", "-c:v", "libx264", "-preset", "slow",
-                            "-crf", "18", "-maxrate", "24M", "-bufsize", "48M", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "256k", "-shortest",
+                            "-crf", "17", "-maxrate", "30M", "-bufsize", "60M", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "256k", "-shortest",
                             "-movflags", "+faststart", "bluehope_edit.mp4"], stdin=subprocess.PIPE)
     for f in range(nf):
         enc.stdin.write(r.frame(f).tobytes())
