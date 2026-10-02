@@ -438,7 +438,7 @@ def corners(img, t, a):
 
 
 def watermark(img, t):
-    a = prog(t, DROP + 0.25, DROP + 0.55) * (1 - prog(t, OUTRO - 0.15, OUTRO))
+    a = prog(t, DROP + 0.25, DROP + 0.55) * (1 - prog(t, CAM_IN, CAM_IN + 0.2))
     if a <= 0:
         return
     slide = (1 - out_cubic(prog(t, DROP + 0.25, DROP + 0.6))) * -120
@@ -489,8 +489,8 @@ def pill(text, fill=(6, 158, 246)):
     return bgr, a
 
 
-CAM_PANEL = (40, 250, 1000, 750)    # x, y, w, h  (caster cam, top)
-GAME_PANEL = (40, 1030, 1000, 740)  # gameplay, bottom
+CAM_PANEL = (40, 272, 1000, 750)    # x, y, w, h  (caster cam, top)
+GAME_PANEL = (40, 1056, 1000, 700)  # gameplay, bottom
 CASTER_PILL = pill("CASTER")
 SCREAM = pil_text("OUI ! OUI !", ANTON, 150, stroke=9, stroke_fill=(8, 22, 48), spacing=3)
 SCREAM_GLOW = glow_of(SCREAM, 16, BLUE)
@@ -630,8 +630,8 @@ class Renderer:
         if d >= 0:
             sc = (1 + 0.45 * np.exp(-d / 0.05) * np.cos(d * 45)) * (1 + 0.1 * voice)
             a = min(1, d / 0.03) * (1 - prog(t, OUTRO - 0.12, OUTRO))
-            blit(img, SCREAM_GLOW, OW / 2, 1015, sc, a * 0.9, add=True)
-            blit(img, SCREAM, OW / 2, 1015, sc, a)
+            blit(img, SCREAM_GLOW, OW / 2, 1040, sc, a * 0.9, add=True)
+            blit(img, SCREAM, OW / 2, 1040, sc, a)
         return img
 
     def frame(self, f):
