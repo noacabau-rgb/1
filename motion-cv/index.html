@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Claude — Motion Reel</title>
+<style>
+  @font-face { font-family: "SG"; src: url("fonts/SpaceGrotesk.woff2") format("woff2"); font-weight: 300 700; }
+  @font-face { font-family: "JB"; src: url("fonts/JetBrainsMono.woff2") format("woff2"); font-weight: 500; }
+  html, body { margin: 0; background: #0b0b0f; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: auto; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script>
+// ─────────────────────────────────────────────────────────────
+//  Claude — Motion Reel (15 s). Everything below is pure code:
+//  no After Effects, no Lottie, no assets but two fonts.
+//  render(t) is a pure function of time → frame-exact renders.
+// ─────────────────────────────────────────────────────────────
+const W = 1920, H = 1080, DURATION = 15;
+const cv = document.getElementById("c");
+const out = cv.getContext("2d");
+const buf = document.createElement("canvas"); buf.width = W; buf.height = H;
+const ctx = buf.getContext("2d");
+
+const C = {
+  ink: "#0b0b0f", cream: "#f2ede4", coral: "#ff5a36",
+  blue: "#5b6cff", yellow: "#ffc93c", mint: "#3ddc97",
+};
+
+// ── maths & easing ───────────────────────────────────────────
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, u) => a + (b - a) * u;
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const E = {
+  outCubic: u => 1 - Math.pow(1 - u, 3),
+  inCubic: u => u * u * u,
+  inOutCubic: u => u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2,
+  inOutQuart: u => u < .5 ? 8 * u ** 4 : 1 - Math.pow(-2 * u + 2, 4) / 2,
+  outExpo: u => u === 1 ? 1 : 1 - Math.pow(2, -10 * u),
+  inExpo: u => u === 0 ? 0 : Math.pow(2, 10 * u - 10),
+  inOutExpo: u => u === 0 ? 0 : u === 1 ? 1 : u < .5 ? Math.pow(2, 20 * u - 10) / 2 : (2 - Math.pow(2, -20 * u + 10)) / 2,
+  outBack: u => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(u - 1, 3) + c1 * Math.pow(u - 1, 2); },
+  inOutBack: u => { const c2 = 1.70158 * 1.525; return u < .5
+      ? (Math.pow(2 * u, 2) * ((c2 + 1) * 2 * u - c2)) / 2
+      : (Math.pow(2 * u - 2, 2) * ((c2 + 1) * (u * 2 - 2) + c2) + 2) / 2; },
+  outBounce: u => { const n = 7.5625, d = 2.75;
+    if (u < 1 / d) return n * u * u;
+    if (u < 2 / d) return n * (u -= 1.5 / d) * u + .75;
+    if (u < 2.5 / d) return n * (u -= 2.25 / d) * u + .9375;
+    return n * (u -= 2.625 / d) * u + .984375; },
+};
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+  let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+  return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+// ── drawing helpers ──────────────────────────────────────────
+const font = (size, w = 700, fam = "SG") => `${w} ${size}px ${fam === "SG" ? '"SG"' : '"JB"'}`;
+function circle(x, y, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, Math.max(0, r), 0, Math.PI * 2); ctx.fill(); }
+
+// Per-letter masked reveal (in) and staggered exit (out).
+function revealText(t, str, x, y, size, opts = {}) {
+  const { t0 = 0, stagger = .03, dur = .7, color = C.cream, colorFn = null, out0 = null,
+          outStagger = .015, outDur = .4, weight = 700, fam = "SG", align = "left", tracking = 0 } = opts;
+  ctx.font = font(size, weight, fam);
+  const widths = [...str].map(ch => ctx.measureText(ch).width + tracking);
+  const total = widths.reduce((a, b) => a + b, 0) - tracking;
+  let cx = align === "center" ? x - total / 2 : x;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, y - size * 1.0, W, size * 1.32); ctx.clip();
+  [...str].forEach((ch, i) => {
+    const u = E.outExpo(prog(t, t0 + i * stagger, t0 + i * stagger + dur));
+    let dy = (1 - u) * size * 1.15, rot = (1 - u) * .35;
+    if (out0 !== null) { const v = E.inExpo(prog(t, out0 + i * outStagger, out0 + i * outStagger + outDur)); dy -= v * size * 1.3; }
+    if (u > 0) {
+      ctx.save(); ctx.translate(cx, y + dy); ctx.rotate(rot);
+      ctx.fillStyle = colorFn ? colorFn(i, ch) : color; ctx.fillText(ch, 0, 0); ctx.restore();
+    }
+    cx += widths[i];
+  });
+  ctx.restore();
+  return total;
+}
+
+function typeText(t, str, x, y, size, t0, cps, color, align = "left", cursor = true) {
+  const n = Math.floor(clamp((t - t0) * cps, 0, str.length));
+  if (t < t0) return;
+  ctx.font = font(size, 500, "JB"); ctx.fillStyle = color; ctx.textAlign = align;
+  const shown = str.slice(0, n);
+  ctx.fillText(shown, x, y);
+  if (cursor && (n < str.length || Math.floor(t * 2.5) % 2 === 0)) {
+    const full = ctx.measureText(str).width, part = ctx.measureText(shown).width;
+    const cx = align === "center" ? x - full / 2 + part : x + part;
+    ctx.fillRect(cx + 4, y - size * .8, size * .55, size * .95);
+  }
+  ctx.textAlign = "left";
+}
+
+function label(t, num, text, t0, t1, col) {
+  const a = prog(t, t0, t0 + .3) * (1 - prog(t, t1 - .25, t1));
+  if (a <= 0) return;
+  ctx.globalAlpha = a; ctx.font = font(22, 500, "JB"); ctx.fillStyle = col;
+  const off = (1 - E.outCubic(prog(t, t0, t0 + .4))) * 30;
+  ctx.fillText(num, 60 + off, H - 74);
+  ctx.globalAlpha = a * .6; ctx.fillText(text, 60 + off + 52, H - 74);
+  ctx.globalAlpha = 1;
+}
+
+// Bouncing ball with physically-motivated squash & stretch.
+function bouncingDot(t, t0, dur, x, floorY, r, fromY, col, ripples = true) {
+  const u = prog(t, t0, t0 + dur);
+  const yAt = tt => lerp(fromY, floorY - r, E.outBounce(prog(tt, t0, t0 + dur)));
+  const y = yAt(t);
+  const v = (yAt(t + 1 / 240) - yAt(t - 1 / 240)) * 120;
+  const impacts = [1 / 2.75, 2 / 2.75, 2.5 / 2.75, 1].map(k => t0 + k * dur);
+  const amps = [.42, .24, .12, .05];
+  let s = 0; impacts.forEach((ti, i) => s += amps[i] * Math.exp(-Math.pow((t - ti) / .035, 2)));
+  const st = u < 1 ? Math.min(Math.abs(v) / 2600, 1) * .3 : 0;
+  const sy = (1 - s) * (1 + st), sx = (1 + s) * (1 - st * .45);
+  // contact shadow
+  const h = clamp((floorY - r - y) / 500);
+  ctx.fillStyle = `rgba(0,0,0,${.35 * (1 - h)})`;
+  ctx.beginPath(); ctx.ellipse(x, floorY + 6, r * (1.3 - h * .7) * sx, r * .22 * (1 - h * .5), 0, 0, Math.PI * 2); ctx.fill();
+  if (ripples) impacts.forEach((ti, i) => {
+    const p = prog(t, ti, ti + .55); if (p <= 0 || p >= 1) return;
+    ctx.strokeStyle = `rgba(242,237,228,${(1 - p) * .5 * amps[i] / .42})`; ctx.lineWidth = 2;
+    const rr = r + E.outCubic(p) * 170;
+    ctx.beginPath(); ctx.ellipse(x, floorY, rr, rr * .22, 0, 0, Math.PI * 2); ctx.stroke();
+  });
+  ctx.fillStyle = col;
+  ctx.beginPath(); ctx.ellipse(x, y + r - r * sy, r * sx, r * sy, 0, 0, Math.PI * 2); ctx.fill();
+  return { x, y };
+}
+
+// ── shapes for morphing (sampled by angle → stable correspondence) ──
+const N = 240;
+function polarPoly(verts) {
+  const pts = [];
+  for (let i = 0; i < N; i++) {
+    const a = -Math.PI / 2 + i / N * Math.PI * 2, dx = Math.cos(a), dy = Math.sin(a);
+    let best = Infinity;
+    for (let k = 0; k < verts.length; k++) {
+      const [x1, y1] = verts[k], [x2, y2] = verts[(k + 1) % verts.length];
+      const ex = x2 - x1, ey = y2 - y1, den = dx * ey - dy * ex;
+      if (Math.abs(den) < 1e-9) continue;
+      const tt = (x1 * ey - y1 * ex) / den, s = (x1 * dy - y1 * dx) / den;
+      if (tt > 0 && s >= -1e-6 && s <= 1 + 1e-6) best = Math.min(best, tt);
+    }
+    pts.push([dx * best, dy * best]);
+  }
+  return pts;
+}
+const regular = (n, R, rot = -Math.PI / 2) => Array.from({ length: n }, (_, i) =>
+  [Math.cos(rot + i / n * Math.PI * 2) * R, Math.sin(rot + i / n * Math.PI * 2) * R]);
+const SHAPES = [
+  Array.from({ length: N }, (_, i) => { const a = -Math.PI / 2 + i / N * Math.PI * 2; return [Math.cos(a), Math.sin(a)]; }),
+  polarPoly(regular(4, 1.18, -Math.PI / 4)),
+  polarPoly(regular(3, 1.3).map(([x, y]) => [x, y + .12])),
+  polarPoly(Array.from({ length: 10 }, (_, i) => { const a = -Math.PI / 2 + i / 10 * Math.PI * 2, R = i % 2 ? .55 : 1.3; return [Math.cos(a) * R, Math.sin(a) * R]; })),
+];
+const MORPH = { seq: [0, 1, 2, 3, 0], starts: [5.45, 6.1, 6.75, 7.4], dur: .5 };
+function morphAt(t) {
+  let k = 0, u = 0;
+  MORPH.starts.forEach((s, i) => { if (t >= s) { k = i; u = prog(t, s, s + MORPH.dur); } });
+  if (t < MORPH.starts[0]) return { pts: SHAPES[0], rot: 0, k: 0, u: 0 };
+  const a = SHAPES[MORPH.seq[k]], b = SHAPES[MORPH.seq[k + 1]], e = E.inOutBack(u);
+  const pts = a.map((p, i) => [lerp(p[0], b[i][0], e), lerp(p[1], b[i][1], e)]);
+  let rot = 0; MORPH.starts.forEach(s => rot += E.inOutCubic(prog(t, s, s + MORPH.dur)) * Math.PI);
+  return { pts, rot, k: u >= 1 ? k + 1 : (u > .5 ? k + 1 : k), u, uRaw: (t - MORPH.starts[k]) / MORPH.dur };
+}
+function pathPts(pts, x, y, s, rot) {
+  const c = Math.cos(rot), sn = Math.sin(rot);
+  ctx.beginPath();
+  pts.forEach(([px, py], i) => { const X = x + (px * c - py * sn) * s, Y = y + (px * sn + py * c) * s; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
+  ctx.closePath();
+}
+
+// ── particles (built once fonts are ready) ───────────────────
+let P = [];
+function buildParticles() {
+  const off = document.createElement("canvas"); off.width = W; off.height = H;
+  const o = off.getContext("2d");
+  o.font = font(330, 700); o.textAlign = "center"; o.textBaseline = "alphabetic";
+  o.fillStyle = "#fff"; o.fillText("MOTION", W / 2, 640);
+  const d = o.getImageData(0, 0, W, H).data, r = rng(7), step = 9;
+  for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) {
+    if (d[(y * W + x) * 4 + 3] > 128) {
+      const ang = r() * Math.PI * 2, dist = 900 + r() * 500;
+      P.push({ tx: x + (r() - .5) * 2, ty: y + (r() - .5) * 2,
+        sx: W / 2 + Math.cos(ang) * dist, sy: H / 2 + Math.sin(ang) * dist * .7,
+        delay: 11.2 + (x / W) * .55 + r() * .18, dur: .8 + r() * .25, swirl: (r() - .5) * 520,
+        ph: r() * 6.28, ex: Math.cos(ang), ey: Math.sin(ang), ed: 300 + r() * 900, size: 2.2 + r() * 2.2 });
+    }
+  }
+}
+const PAL = [C.coral, C.yellow, C.cream, C.blue];
+function particleColor(x) {
+  const f = clamp((x - 330) / 1260) * (PAL.length - 1), i = Math.min(PAL.length - 2, Math.floor(f));
+  return [PAL[i], PAL[i + 1], f - i];
+}
+function hexMix(a, b, u) {
+  const pa = [1, 3, 5].map(i => parseInt(a.substr(i, 2), 16)), pb = [1, 3, 5].map(i => parseInt(b.substr(i, 2), 16));
+  return `rgb(${pa.map((v, i) => Math.round(lerp(v, pb[i], u))).join(",")})`;
+}
+function drawParticles(t) {
+  const ex = E.outExpo(prog(t, 13.2, 13.9)), fade = 1 - prog(t, 13.25, 13.8);
+  if (fade <= 0) return;
+  ctx.globalAlpha = fade;
+  for (let i = 0; i < P.length; i++) {
+    const p = P[i], u = prog(t, p.delay, p.delay + p.dur);
+    if (u <= 0 && t < p.delay - .3) continue;
+    const e = E.inOutCubic(u);
+    const dx = p.tx - p.sx, dy = p.ty - p.sy, len = Math.hypot(dx, dy);
+    const sw = Math.sin(Math.PI * e) * p.swirl;
+    let x = lerp(p.sx, p.tx, e) + (-dy / len) * sw, y = lerp(p.sy, p.ty, e) + (dx / len) * sw;
+    x += Math.sin(t * 3 + p.ph) * 1.4 * e; y += Math.cos(t * 2.6 + p.ph) * 1.4 * e;
+    x += p.ex * ex * p.ed; y += p.ey * ex * p.ed;
+    const [a, b, m] = particleColor(p.tx);
+    ctx.fillStyle = hexMix(a, b, m);
+    const s = p.size * (0.4 + .6 * e);
+    ctx.fillRect(x - s / 2, y - s / 2, s, s);
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ── SCENE 1 · 0.0 → 2.1 · squash & stretch, circle wipe ──────
+function scene1(t) {
+  ctx.fillStyle = C.ink; ctx.fillRect(0, 0, W, H);
+  const floorY = 640, r = 36, x = W / 2;
+  const lu = E.outExpo(prog(t, .05, .8)) * (1 - prog(t, 1.15, 1.4));
+  ctx.strokeStyle = `rgba(242,237,228,${.35 * lu})`; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x - 330 * lu, floorY); ctx.lineTo(x + 330 * lu, floorY); ctx.stroke();
+  // measure ticks on the floor, like a timeline
+  for (let i = -6; i <= 6; i++) {
+    const a = lu * prog(t, .3 + Math.abs(i) * .03, .6 + Math.abs(i) * .03);
+    ctx.fillStyle = `rgba(242,237,228,${.25 * a})`; ctx.fillRect(x + i * 50 - 1, floorY + 14, 2, 10 * a);
+  }
+  const ant = E.outCubic(prog(t, 1.2, 1.38)) * .22;
+  const grow = E.inOutQuart(prog(t, 1.38, 2.1));
+  if (grow <= 0) {
+    ctx.save(); ctx.translate(x, floorY); ctx.scale(1 + ant * .35, 1 - ant); ctx.translate(-x, -floorY);
+    bouncingDot(t, .15, 1.0, x, floorY, r, -80, C.coral);
+    ctx.restore();
+  } else {
+    const R = lerp(r * .8, Math.hypot(W, H), grow);
+    circle(x, floorY - r * (1 - ant) + (H / 2 - floorY) * grow, R, C.coral);
+    // trailing rings
+    [0.08, .16].forEach((d, i) => {
+      const g = E.inOutQuart(prog(t, 1.38 + d, 2.1));
+      ctx.strokeStyle = i ? C.yellow : C.cream; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.arc(x, floorY - r + (H / 2 - floorY) * g, lerp(r, Math.hypot(W, H), g), 0, Math.PI * 2); ctx.stroke();
+    });
+  }
+  typeText(t, "hello.world()", W / 2, 360, 30, .45, 22, `rgba(242,237,228,${.55 * (1 - prog(t, 1.15, 1.35))})`, "center", false);
+  label(t, "01", "squash & stretch", .2, 1.45, C.cream);
+}
+
+// ── SCENE 2 · 2.1 → 5.0 · kinetic typography ─────────────────
+function scene2(t) {
+  ctx.fillStyle = C.coral; ctx.fillRect(0, 0, W, H);
+  // drifting stripes texture
+  ctx.fillStyle = "rgba(11,11,15,.06)";
+  for (let i = -2; i < 30; i++) ctx.fillRect(((i * 90 + t * 60) % (W + 180)) - 90, 0, 2, H);
+  const X = 190;
+  revealText(t, "Bonjour,", X, 450, 190, { t0: 2.15, stagger: .035, color: C.ink, out0: 4.3 });
+  const nameStart = "je suis ".length;
+  const w2 = revealText(t, "je suis Claude.", X, 660, 190, { t0: 2.5, stagger: .035, out0: 4.38,
+    colorFn: i => i >= nameStart ? C.cream : C.ink });
+  // underline under "Claude"
+  ctx.font = font(190); const pre = ctx.measureText("je suis ").width, cw = ctx.measureText("Claude").width;
+  const ul = E.outExpo(prog(t, 3.35, 3.85)), ulOut = E.inExpo(prog(t, 4.3, 4.6));
+  ctx.fillStyle = C.ink;
+  ctx.fillRect(X + pre + cw * ulOut, 700, cw * (ul - ulOut), 12);
+  typeText(t, "→ et je donne vie aux pixels.", X + 6, 800, 34, 3.5, 32, `rgba(11,11,15,${1 - prog(t, 4.3, 4.5)})`);
+  // spinning badge
+  const bIn = E.outBack(prog(t, 3.0, 3.6)), bOut = 1 - E.inCubic(prog(t, 4.3, 4.6));
+  if (bIn > 0) {
+    ctx.save(); ctx.translate(1600, 330); ctx.scale(bIn * bOut, bIn * bOut); ctx.rotate(t * .9);
+    circle(0, 0, 130, C.ink);
+    ctx.font = font(20, 500, "JB"); ctx.fillStyle = C.cream; ctx.textAlign = "center";
+    const s = "MOTION • DESIGN • CODE • ";
+    [...s].forEach((ch, i) => { ctx.save(); ctx.rotate(i / s.length * Math.PI * 2); ctx.fillText(ch, 0, -95); ctx.restore(); });
+    ctx.textAlign = "left"; ctx.rotate(-t * .9);
+    ctx.fillStyle = C.coral; ctx.font = font(64, 700); ctx.textAlign = "center"; ctx.fillText("✦", 0, 22); ctx.textAlign = "left";
+    ctx.restore();
+  }
+  label(t, "02", "typographie cinétique", 2.3, 4.4, C.ink);
+  // column wipe to ink
+  for (let i = 0; i < 8; i++) {
+    const h = E.inOutCubic(prog(t, 4.5 + i * .03, 4.5 + i * .03 + .29)) * H;
+    ctx.fillStyle = C.ink; ctx.fillRect(i * W / 8 - 1, H - h, W / 8 + 2, h);
+  }
+}
+
+// ── SCENE 3 · 5.0 → 8.4 · morphing, easing curves, orbits ────
+function scene3(t) {
+  ctx.fillStyle = C.ink; ctx.fillRect(0, 0, W, H);
+  // dotted grid
+  const ga = prog(t, 5.0, 5.4) * (1 - prog(t, 7.9, 8.1));
+  ctx.fillStyle = `rgba(242,237,228,${.12 * ga})`;
+  for (let y = 60; y < H; y += 60) for (let x = 60 + (t * 20) % 60; x < W; x += 60) ctx.fillRect(x - 1, y - 1, 2, 2);
+  const cx = W / 2, cy = H / 2, R = 190;
+  const sIn = E.outBack(prog(t, 5.0, 5.45));
+  const sOut = E.inOutQuart(prog(t, 7.95, 8.4));
+  const scale = R * sIn * lerp(1, Math.hypot(W, H) / R * 0.62, sOut);
+  // orbiters
+  const oa = prog(t, 5.15, 5.5) * (1 - prog(t, 7.85, 8.0));
+  [[C.coral, 0, 1.6], [C.blue, Math.PI / 3, -1.9], [C.yellow, -Math.PI / 3, 2.3]].forEach(([col, tilt, sp], j) => {
+    for (let k = 14; k >= 0; k--) {
+      const tt = t - k * .012, a = tt * sp * 2 + j * 2;
+      const ex = Math.cos(a) * 330, ey = Math.sin(a) * 105;
+      const x = cx + ex * Math.cos(tilt) - ey * Math.sin(tilt), y = cy + ex * Math.sin(tilt) + ey * Math.cos(tilt);
+      ctx.globalAlpha = oa * (1 - k / 15) * (k ? .5 : 1); circle(x, y, k ? 9 - k * .5 : 11, col);
+    }
+    ctx.globalAlpha = oa * .12; ctx.strokeStyle = C.cream; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(cx, cy, 330, 105, tilt, 0, Math.PI * 2); ctx.stroke();
+  });
+  ctx.globalAlpha = 1;
+  // echo trails
+  if (sOut === 0) for (let k = 7; k >= 1; k--) {
+    const m = morphAt(t - k * .028), sI = E.outBack(prog(t - k * .028, 5.0, 5.45));
+    ctx.strokeStyle = k % 2 ? C.coral : C.blue; ctx.globalAlpha = (1 - k / 8) * .7; ctx.lineWidth = 3;
+    pathPts(m.pts, cx, cy, R * sI, m.rot); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  const m = morphAt(t);
+  ctx.fillStyle = C.cream; pathPts(m.pts, cx, cy, scale, m.rot); ctx.fill();
+  // side panels
+  const pa = prog(t, 5.2, 5.5) * (1 - prog(t, 7.8, 7.98));
+  if (pa > 0) {
+    ctx.globalAlpha = pa;
+    const names = ["cercle", "carré", "triangle", "étoile"];
+    ctx.font = font(30, 500, "JB");
+    let active = m.k % 4; if (t < MORPH.starts[0] + .25) active = 0;
+    names.forEach((n, i) => {
+      ctx.fillStyle = i === active ? C.coral : "rgba(242,237,228,.35)";
+      ctx.fillText((i === active ? "▸ " : "  ") + n, 130, 420 + i * 64);
+    });
+    ctx.font = font(18, 500, "JB"); ctx.fillStyle = "rgba(242,237,228,.4)";
+    ctx.fillText("SHAPE.MORPH(240 pts)", 130, 360);
+    // easing graph
+    const gx = 1440, gy = 690, gs = 320;
+    ctx.strokeStyle = "rgba(242,237,228,.25)"; ctx.lineWidth = 1.5;
+    ctx.strokeRect(gx, gy - gs, gs, gs);
+    ctx.setLineDash([4, 6]); ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx + gs, gy - gs); ctx.stroke(); ctx.setLineDash([]);
+    const drawn = E.inOutCubic(prog(t, 5.25, 5.9));
+    ctx.strokeStyle = C.coral; ctx.lineWidth = 4; ctx.beginPath();
+    for (let i = 0; i <= 100 * drawn; i++) { const u = i / 100, X = gx + u * gs, Y = gy - E.inOutBack(u) * gs; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+    ctx.stroke();
+    const uR = clamp(m.uRaw ?? 0), cxp = gx + uR * gs, cyp = gy - E.inOutBack(uR) * gs;
+    if (t > MORPH.starts[0]) {
+      ctx.strokeStyle = "rgba(255,201,60,.5)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cxp, gy); ctx.lineTo(cxp, cyp); ctx.lineTo(gx + gs + 30, cyp); ctx.stroke();
+      circle(cxp, cyp, 9, C.yellow); circle(gx + gs + 30, cyp, 7, C.yellow);
+    }
+    ctx.font = font(20, 500, "JB"); ctx.fillStyle = C.cream; ctx.fillText("easeInOutBack", gx, gy + 44);
+    ctx.fillStyle = "rgba(242,237,228,.45)"; ctx.fillText("cubic-bezier(.68,-.6,.32,1.6)", gx, gy + 74);
+    ctx.globalAlpha = 1;
+  }
+  label(t, "03", "morphing & easing", 5.15, 7.95, C.cream);
+}
+
+// ── SCENE 4 · 8.4 → 11.2 · data in motion ────────────────────
+function scene4(t) {
+  ctx.fillStyle = C.cream; ctx.fillRect(0, 0, W, H);
+  const stats = [
+    { x: 400, from: 0, to: 60, unit: "fps", lab: "de fluidité", t0: 8.45 },
+    { x: 960, from: 0, to: 900, unit: "frames", lab: "calculées une à une", t0: 8.6 },
+    { x: 1520, from: 99, to: 0, unit: "logiciel", lab: "d'animation utilisé", t0: 8.75 },
+  ];
+  stats.forEach((s, i) => {
+    const u = E.outExpo(prog(t, s.t0 + .1, s.t0 + 1.2));
+    const val = Math.round(lerp(s.from, s.to, u)).toString();
+    const ws = revealText(t, val, s.x, 470, 200, { t0: s.t0, stagger: .04, color: C.ink, align: "center", out0: 10.6 });
+    ctx.save(); ctx.globalAlpha = 1 - prog(t, 10.6, 10.8);
+    revealText(t, s.unit, s.x, 540, 40, { t0: s.t0 + .25, stagger: .02, color: C.coral, align: "center", weight: 700 });
+    ctx.restore();
+    ctx.globalAlpha = prog(t, s.t0 + .5, s.t0 + .8) * (1 - prog(t, 10.6, 10.8));
+    ctx.font = font(22, 500, "JB"); ctx.fillStyle = "rgba(11,11,15,.6)"; ctx.textAlign = "center";
+    ctx.fillText(s.lab, s.x, 590); ctx.textAlign = "left"; ctx.globalAlpha = 1;
+    if (i) { const l = E.outExpo(prog(t, 8.6 + i * .1, 9.3)) * (1 - prog(t, 10.6, 10.9));
+      ctx.fillStyle = "rgba(11,11,15,.2)"; ctx.fillRect(s.x - 280, 400 - 160 * l, 2, 320 * l); }
+  });
+  // live bar chart
+  const n = 26, x0 = 180, bw = (W - 2 * x0) / n;
+  for (let i = 0; i < n; i++) {
+    const g = E.outBack(prog(t, 9.0 + i * .025, 9.0 + i * .025 + .6)) * (1 - E.inCubic(prog(t, 10.55 + i * .008, 10.8 + i * .008)));
+    const h = (170 + 90 * Math.sin(i * .55) + 35 * Math.sin(t * 5 + i * .7)) * g;
+    ctx.fillStyle = [C.ink, C.coral, C.blue][i % 3];
+    ctx.fillRect(x0 + i * bw + 6, 980 - h, bw - 12, h);
+  }
+  ctx.fillStyle = `rgba(11,11,15,${.3 * prog(t, 8.9, 9.2)})`; ctx.fillRect(x0, 980, (W - 2 * x0) * E.outExpo(prog(t, 8.9, 9.6)), 2);
+  label(t, "04", "data in motion", 8.5, 10.8, C.ink);
+  ctx.font = font(22, 500, "JB"); ctx.fillStyle = `rgba(11,11,15,${.5 * prog(t, 8.5, 8.8) * (1 - prog(t, 10.6, 10.8))})`;
+  ctx.textAlign = "right"; ctx.fillText("ce que vous regardez = du code", W - 60, H - 74); ctx.textAlign = "left";
+  // skewed sweep to ink
+  const p = E.inOutQuart(prog(t, 10.75, 11.2)), edge = lerp(-500, W + 500, p);
+  ctx.fillStyle = C.ink; ctx.beginPath();
+  ctx.moveTo(-600, 0); ctx.lineTo(edge + 250, 0); ctx.lineTo(edge - 250, H); ctx.lineTo(-600, H); ctx.fill();
+  ctx.fillStyle = C.coral; ctx.beginPath();
+  ctx.moveTo(edge + 250, 0); ctx.lineTo(edge + 290, 0); ctx.lineTo(edge - 210, H); ctx.lineTo(edge - 250, H); ctx.fill();
+}
+
+// ── SCENE 5 · 11.2 → 13.3 · particle typography ──────────────
+function scene5(t) {
+  ctx.fillStyle = C.ink; ctx.fillRect(0, 0, W, H);
+  drawParticles(t);
+  const a = prog(t, 12.0, 12.3) * (1 - prog(t, 13.0, 13.2));
+  ctx.globalAlpha = a; ctx.font = font(24, 500, "JB"); ctx.fillStyle = "rgba(242,237,228,.6)"; ctx.textAlign = "center";
+  ctx.fillText(`${P.length.toLocaleString("fr-FR")} particules · chacune sa trajectoire`, W / 2, 760);
+  ctx.textAlign = "left"; ctx.globalAlpha = 1;
+  label(t, "05", "systèmes de particules", 11.3, 13.2, C.cream);
+}
+
+// ── SCENE 6 · 13.3 → 15.0 · signature ────────────────────────
+function scene6(t) {
+  ctx.fillStyle = C.ink; ctx.fillRect(0, 0, W, H);
+  drawParticles(t);
+  ctx.font = font(250); const tw = ctx.measureText("Claude").width;
+  const X = W / 2 - (tw + 60) / 2, Y = 560;
+  revealText(t, "Claude", X, Y, 250, { t0: 13.4, stagger: .045, color: C.cream });
+  if (t > 13.7) bouncingDot(t, 13.7, .75, X + tw + 34, Y, 26, -60, C.coral, false);
+  typeText(t, "motion designer · code → mouvement", W / 2, 660, 34, 14.05, 55, "rgba(242,237,228,.8)", "center");
+  const l = E.outExpo(prog(t, 14.0, 14.7));
+  ctx.fillStyle = C.coral; ctx.fillRect(W / 2 - 360 * l, 712, 720 * l, 3);
+  ctx.globalAlpha = prog(t, 14.45, 14.75);
+  ctx.font = font(20, 500, "JB"); ctx.fillStyle = "rgba(242,237,228,.45)"; ctx.textAlign = "center";
+  ctx.fillText("100 % code  ·  canvas 2D  ·  1920×1080  ·  60 fps  ·  motion blur", W / 2, 960);
+  ctx.textAlign = "left"; ctx.globalAlpha = 1;
+}
+
+// ── HUD, grain, vignette ─────────────────────────────────────
+const grain = document.createElement("canvas"); grain.width = grain.height = 256;
+{ const g = grain.getContext("2d"), id = g.createImageData(256, 256), r = rng(3);
+  for (let i = 0; i < id.data.length; i += 4) { const v = r() * 255; id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 255; }
+  g.putImageData(id, 0, 0); }
+function hud(t, frame) {
+  ctx.save(); ctx.globalCompositeOperation = "difference"; ctx.fillStyle = "#f2ede4";
+  ctx.font = font(18, 500, "JB");
+  ctx.fillText("CLAUDE / MOTION REEL — 2026", 60, 64);
+  const f = Math.floor(t * 60) % 60, s = Math.floor(t);
+  ctx.textAlign = "right"; ctx.fillText(`00:00:${String(s).padStart(2, "0")}:${String(f).padStart(2, "0")}`, W - 60, 64);
+  ctx.textAlign = "left";
+  ctx.fillRect(60, H - 40, (W - 120) * (t / DURATION), 2);
+  ctx.globalAlpha = .3; ctx.fillRect(60, H - 40, W - 120, 1);
+  ctx.restore();
+}
+function post(frame) {
+  const r = rng(frame + 11);
+  ctx.save(); ctx.globalAlpha = .045; ctx.globalCompositeOperation = "overlay";
+  ctx.translate(-Math.floor(r() * 256), -Math.floor(r() * 256));
+  ctx.fillStyle = ctx.createPattern(grain, "repeat"); ctx.fillRect(0, 0, W + 256, H + 256); ctx.restore();
+  const v = ctx.createRadialGradient(W / 2, H / 2, H * .35, W / 2, H / 2, H * 1.05);
+  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,.35)");
+  ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+}
+
+function renderScene(t) {
+  if (t < 2.1) scene1(t);
+  else if (t < 5.0) scene2(t);
+  else if (t < 8.4) scene3(t);
+  else if (t < 11.2) scene4(t);
+  else if (t < 13.3) scene5(t);
+  else scene6(t);
+}
+
+// Motion blur: average sub-frames across a 180° shutter.
+const FPS = 60, SUB = 4, SHUTTER = .5;
+window.renderFrame = function (frame) {
+  out.clearRect(0, 0, W, H);
+  for (let s = 0; s < SUB; s++) {
+    const t = Math.min(DURATION - 1e-4, (frame + (s / SUB - .5) * SHUTTER) / FPS);
+    renderScene(Math.max(0, t));
+    out.globalAlpha = 1 / (s + 1); out.drawImage(buf, 0, 0);
+  }
+  out.globalAlpha = 1;
+  // HUD & grain are sharp, drawn once on the composited frame
+  ctx.clearRect(0, 0, W, H); ctx.drawImage(cv, 0, 0);
+  hud(frame / FPS, frame); post(frame);
+  out.drawImage(buf, 0, 0);
+};
+window.TOTAL_FRAMES = DURATION * FPS;
+
+window.ready = (async () => {
+  await document.fonts.load(font(100, 700)); await document.fonts.load(font(20, 500, "JB"));
+  await document.fonts.ready; buildParticles(); return true;
+})();
+
+if (!location.search.includes("render")) window.ready.then(() => {
+  const t0 = performance.now();
+  (function loop() { const f = Math.floor((performance.now() - t0) / 1000 * FPS) % window.TOTAL_FRAMES; renderFrame(f); requestAnimationFrame(loop); })();
+});
+</script>
+</body>
+</html>
