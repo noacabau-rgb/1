@@ -1,0 +1,16 @@
+{
+ "segments": [
+  {"file": "clips/clip1.mp4", "in": 0.0, "beats": 4, "ramp": [[0, 1], [0.5, 0.3], [1, 0.3]], "dim_before_drop": true},
+  {"file": "clips/clip2.mp4", "in": 0.0, "beats": 4, "speed": 1.2, "dim_before_drop": true},
+  {"file": "clips/clip3.mp4", "kill": 2.0, "kill_beat": 0, "beats": 4},
+  {"file": "clips/clip4.mp4", "kill": 2.0, "kill_beat": 2, "beats": 4},
+  {"file": "clips/clip5.mp4", "kill": 2.0, "kill_beat": 1, "beats": 4},
+  {"file": "clips/clip6.mp4", "kill": 2.0, "kill_beat": 2, "beats": 4},
+  {"file": "clips/clip7.mp4", "kill": 2.0, "kill_beat": 2, "beats": 4},
+  {"file": "clips/clip8.mp4", "kill": 2.0, "kill_beat": 1, "beats": 4, "ramp": [[0, 1], [0.4, 0.25], [1, 1.4]]},
+  {"file": "clips/clip9.mp4", "kill": 2.0, "kill_beat": 2, "beats": 4},
+  {"file": "clips/clip10.mp4", "kill": 2.0, "kill_beat": 4, "beats": 4}
+ ],
+ "texts": [{"t": 0.25, "dur": 1.4, "text": "VALORANT", "size": 170, "y": 0.42}],
+ "outro": 0.85
+}
