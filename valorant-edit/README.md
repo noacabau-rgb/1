@@ -10,3 +10,21 @@ python3 edit.py edit.json edit.mp4
 ```
 
 Dépendances : `pip install numpy scipy opencv-python-headless pillow` + ffmpeg.
+
+## Edit BLUE HOPE (`bluehope_edit.mp4`)
+
+17,8 s · 1080×1920 · 60 fps · beat phonk 140 BPM synthétisé.
+
+| Temps | Contenu |
+|---|---|
+| 0 – 1,7 s | Intro motion design : logo qui déploie ses ailes, reflet, « BLUE HOPE / ESPORT » lettre par lettre, sur le pré-kill de Jetax ralenti et assombri |
+| 1,7 s | DROP : one tap (c4) + flash, « ONE TAP » |
+| 2,6 – 12 s | Kills calés sur les temps forts (ralentis fluides par interpolation optique), multi-kills Sheriff et Vandal, clutch violet + « CLUTCH » |
+| 12 – 15,4 s | La musique se coupe (tape stop) : kill final + cri du caster « OUI ! OUI ! » |
+| 15,4 – 17,8 s | Outro : logo BLUE HOPE sur le dernier temps fort |
+
+```
+python3 bluehope_audio.py   # musique + sfx
+python3 bluehope.py         # rendu -> bluehope_edit.mp4 (les clips sources vont dans clips/c1..c4.mp4)
+python3 bluehope.py --stills 1.0 3.5   # aperçus dans work/
+```
