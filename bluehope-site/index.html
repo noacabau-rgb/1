@@ -1,0 +1,1066 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blue Hope Esport</title>
+<meta name="description" content="Blue Hope, équipe esport Valorant. Highlights, roster et recrutement.">
+<meta name="theme-color" content="#030a16">
+<link rel="icon" type="image/png" href="assets/logo-128.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600&family=Chakra+Petch:wght@500;600;700&display=swap">
+<style>
+/* Layout concept: a night-flight HUD. One fixed WebGL stage carries the 3D eagle;
+   every section is a transparent overlay that steers the eagle as you scroll. */
+:root {
+  color-scheme: dark;
+  --night: #030a16;      /* stage ground */
+  --navy: #071b36;       /* panels */
+  --blue: #069ef6;       /* team blue */
+  --ice: #a9e1ff;        /* highlights, outlines */
+  --mist: #8299b9;       /* secondary text */
+  --white: #eef6ff;      /* primary text */
+  --line: rgba(150, 205, 255, .2);
+  --glass: rgba(7, 27, 54, .62);
+  --f-display: "Anton", "Impact", "Arial Narrow Bold", sans-serif;
+  --f-ui: "Chakra Petch", "Rajdhani", "Segoe UI", sans-serif;
+  --f-body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --gutter: clamp(16px, 4vw, 56px);
+  --chamfer: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; background: var(--night); }
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+body {
+  margin: 0; background: var(--night); color: var(--white);
+  font: 400 1.0625rem/1.6 var(--f-body); overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+img, video { max-width: 100%; display: block; }
+[hidden] { display: none !important; }
+a { color: inherit; }
+::selection { background: var(--blue); color: var(--night); }
+:focus-visible { outline: 2px solid var(--ice); outline-offset: 3px; }
+
+/* ── stage & overlays ─────────────────────────────── */
+#gl { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; }
+.fallback-logo { display: none; }
+.no-gl .fallback-logo {
+  display: block; position: fixed; z-index: 0; left: 50%; top: 50%; width: min(70vw, 560px);
+  transform: translate(-50%, -50%); opacity: .55; filter: drop-shadow(0 0 60px rgba(6, 158, 246, .6));
+}
+.grain {
+  position: fixed; inset: -100px; z-index: 3; pointer-events: none; opacity: .055; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain .9s steps(5) infinite;
+}
+@keyframes grain { 0% { transform: translate(0, 0); } 20% { transform: translate(-40px, 20px); } 40% { transform: translate(30px, -30px); } 60% { transform: translate(-20px, -40px); } 80% { transform: translate(40px, 30px); } 100% { transform: translate(0, 0); } }
+main { position: relative; z-index: 1; }
+.wrap { width: min(1320px, 100%); margin-inline: auto; padding-inline: var(--gutter); }
+
+/* ── loader ───────────────────────────────────────── */
+.loader {
+  position: fixed; inset: 0; z-index: 200; background: var(--night); display: grid; place-items: center;
+  clip-path: inset(0 0 0 0);
+}
+.loader__inner { display: grid; justify-items: center; gap: 22px; }
+.loader__logo { width: min(46vw, 220px); position: relative; }
+.loader__logo img { width: 100%; }
+.loader__logo .ghost { opacity: .12; filter: grayscale(1) brightness(2); }
+.loader__logo .fill { position: absolute; inset: 0; clip-path: inset(100% 0 0 0); filter: drop-shadow(0 0 24px rgba(6, 158, 246, .7)); }
+.loader__count { font: 600 .8125rem/1 var(--f-ui); letter-spacing: .32em; color: var(--mist); font-variant-numeric: tabular-nums; }
+.loader__count b { color: var(--ice); font-weight: 600; }
+.no-js .loader { display: none; }
+
+/* ── nav ──────────────────────────────────────────── */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  padding: calc(env(safe-area-inset-top, 0px) + 18px) var(--gutter) 18px;
+  transition: background .4s, backdrop-filter .4s, padding .4s;
+}
+.nav.is-scrolled { background: rgba(3, 10, 22, .55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding-block-end: 12px; }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.brand img { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(6, 158, 246, .5)); }
+.brand span { font: 400 1.35rem/1 var(--f-display); letter-spacing: .06em; }
+.nav__links { display: flex; gap: clamp(14px, 2.4vw, 34px); list-style: none; margin: 0; padding: 0; }
+.nav__links a, .menu-btn {
+  font: 600 .78rem/1 var(--f-ui); letter-spacing: .18em; text-transform: uppercase; text-decoration: none; color: var(--mist);
+  transition: color .25s;
+}
+.nav__links a:hover, .nav__links a.is-active { color: var(--white); }
+.nav__links a.is-active::before { content: "/ "; color: var(--blue); }
+.menu-btn { display: none; background: none; border: 1px solid var(--line); color: var(--white); padding: 10px 14px; cursor: pointer; clip-path: var(--chamfer); }
+.mobile-menu {
+  position: fixed; inset: 0; z-index: 55; background: rgba(3, 10, 22, .96); display: grid; align-content: center; gap: 8px;
+  padding-inline: var(--gutter); clip-path: circle(0% at calc(100% - 48px) 40px); transition: clip-path .6s cubic-bezier(.7, 0, .2, 1);
+}
+.mobile-menu.is-open { clip-path: circle(150% at calc(100% - 48px) 40px); }
+.mobile-menu a { font: 400 clamp(2.8rem, 14vw, 4.5rem)/1.05 var(--f-display); text-decoration: none; text-transform: uppercase; }
+.mobile-menu a span { color: var(--blue); font: 600 .8rem/1 var(--f-ui); letter-spacing: .2em; vertical-align: top; margin-right: 10px; }
+
+/* ── shared type ──────────────────────────────────── */
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 12px; margin: 0 0 18px;
+  font: 600 .78rem/1 var(--f-ui); letter-spacing: .26em; text-transform: uppercase; color: var(--ice);
+}
+.eyebrow::before { content: ""; width: 28px; height: 1px; background: var(--blue); }
+.h-section {
+  font: 400 clamp(3.2rem, 10vw, 9rem)/.86 var(--f-display); text-transform: uppercase; margin: 0;
+  text-wrap: balance; letter-spacing: .005em;
+}
+.h-section .stroke { color: transparent; -webkit-text-stroke: 1.5px var(--ice); }
+.lead { max-width: 46ch; color: var(--mist); text-shadow: 0 2px 24px var(--night); font-size: clamp(1.02rem, 1.4vw, 1.18rem); }
+.split-line { display: block; overflow: hidden; padding-block: .06em; margin-block: -.06em; }
+.split-line > span { display: inline-block; will-change: transform; }
+
+/* ── buttons ──────────────────────────────────────── */
+.btn {
+  --bg: var(--blue); --fg: #02101f;
+  position: relative; display: inline-flex; align-items: center; gap: 12px; overflow: hidden;
+  padding: 17px 26px; border: 0; cursor: pointer; text-decoration: none;
+  font: 700 .8rem/1 var(--f-ui); letter-spacing: .2em; text-transform: uppercase;
+  background: var(--bg); color: var(--fg); clip-path: var(--chamfer);
+  transition: transform .35s cubic-bezier(.2, .8, .2, 1);
+}
+.btn::after {
+  content: ""; position: absolute; inset: 0; transform: translateX(-120%) skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .55), transparent); transition: transform .6s;
+}
+.btn:hover::after { transform: translateX(120%) skewX(-20deg); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.btn--ghost { --bg: rgba(6, 158, 246, .1); --fg: var(--white); box-shadow: inset 0 0 0 1px rgba(169, 225, 255, .35); }
+
+/* ── hero ─────────────────────────────────────────── */
+.hero {
+  position: relative; min-height: 100svh; display: grid; grid-template-rows: auto 1fr auto; gap: 24px;
+  padding-block: calc(env(safe-area-inset-top, 0px) + 104px) 34px;
+}
+.hero__meta { display: flex; flex-wrap: wrap; gap: 10px 28px; font: 600 .76rem/1 var(--f-ui); letter-spacing: .26em; text-transform: uppercase; color: var(--mist); }
+.hero__meta span:first-child { color: var(--ice); }
+.hero__title {
+  margin: 0; align-self: center; display: flex; flex-direction: column;
+  font: 400 clamp(5.4rem, 21vw, 22rem)/.8 var(--f-display); text-transform: uppercase; letter-spacing: -.005em;
+}
+.hero__title .split-line:first-child { align-self: flex-start; }
+.hero__title .split-line:last-child { align-self: flex-end; color: transparent; -webkit-text-stroke: clamp(1.5px, .22vw, 3px) var(--ice); }
+.hero__title .ch { display: inline-block; }
+.hero__foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 28px; }
+.hero__sub { margin: 0 0 22px; max-width: 34ch; font-size: clamp(1.05rem, 1.5vw, 1.25rem); color: #c8dcf2; }
+.hero__ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+.scroll-cue { display: grid; justify-items: center; gap: 12px; font: 600 .7rem/1 var(--f-ui); letter-spacing: .3em; color: var(--mist); writing-mode: vertical-rl; }
+.scroll-cue i { display: block; width: 1px; height: 64px; background: linear-gradient(var(--ice), transparent); animation: cue 1.8s cubic-bezier(.6, 0, .2, 1) infinite; transform-origin: top; }
+@keyframes cue { 0% { transform: scaleY(0); } 50% { transform: scaleY(1); transform-origin: top; } 51% { transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
+.hud-corner { position: absolute; width: 22px; height: 22px; border: 0 solid rgba(169, 225, 255, .45); pointer-events: none; }
+.hud-corner.tl { top: calc(env(safe-area-inset-top, 0px) + 86px); left: var(--gutter); border-width: 1px 0 0 1px; }
+.hud-corner.tr { top: calc(env(safe-area-inset-top, 0px) + 86px); right: var(--gutter); border-width: 1px 1px 0 0; }
+
+/* ── marquee ──────────────────────────────────────── */
+.marquees { position: relative; padding-block: 9vh; overflow: hidden; }
+.marquee { white-space: nowrap; font: 400 clamp(2.4rem, 6.5vw, 5.6rem)/1 var(--f-display); text-transform: uppercase; }
+.marquee__track { display: inline-flex; will-change: transform; }
+.marquee__track span { padding-inline: .35em; display: inline-flex; align-items: center; gap: .35em; }
+.marquee__track span::after { content: ""; width: .32em; height: .32em; background: currentColor; transform: rotate(45deg); display: inline-block; }
+.marquee--solid { background: var(--blue); color: var(--night); padding-block: .14em .1em; transform: rotate(-2.4deg); position: relative; z-index: 2; box-shadow: 0 0 80px rgba(6, 158, 246, .45); }
+.marquee--outline { color: transparent; -webkit-text-stroke: 1.2px rgba(169, 225, 255, .55); transform: rotate(2deg); margin-top: -.4em; }
+
+/* ── manifesto ────────────────────────────────────── */
+.manifesto { padding-block: 16vh 18vh; }
+.manifesto__text {
+  margin: 0; max-width: 14em; font: 600 clamp(1.7rem, 4.1vw, 3.6rem)/1.14 var(--f-body); letter-spacing: -.01em; text-wrap: pretty;
+}
+.manifesto__text .w { color: #4d6688; transition: color .2s; }
+.manifesto__text, .h-section, .hero__sub, .moment__desc { text-shadow: 0 2px 28px rgba(3, 10, 22, .85); }
+.manifesto__tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 40px; padding: 0; list-style: none; }
+.manifesto__tags li { font: 600 .74rem/1 var(--f-ui); letter-spacing: .2em; text-transform: uppercase; padding: 12px 16px; border: 1px solid var(--line); color: var(--ice); clip-path: var(--chamfer); background: rgba(6, 158, 246, .06); }
+
+/* ── signature (pinned horizontal) ────────────────── */
+.sig { position: relative; height: 100svh; overflow: hidden; }
+.sig__head { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 96px); left: var(--gutter); z-index: 2; }
+.sig__track { display: flex; height: 100%; width: max-content; will-change: transform; }
+.panel { position: relative; width: 100vw; height: 100%; display: grid; place-items: center; padding-inline: var(--gutter); }
+.panel__word {
+  font: 400 clamp(6rem, 25vw, 27rem)/.8 var(--f-display); text-transform: uppercase; margin: 0;
+  color: transparent; -webkit-text-stroke: 1.4px rgba(169, 225, 255, .5); user-select: none;
+}
+.panel__card {
+  position: absolute; left: var(--gutter); bottom: 9vh; width: min(380px, calc(100% - 2 * var(--gutter)));
+  padding: 22px 24px; background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--line); clip-path: var(--chamfer);
+}
+.panel:nth-child(even) .panel__card { left: auto; right: var(--gutter); }
+.panel__card h3 { margin: 0 0 6px; font: 400 1.9rem/1 var(--f-display); text-transform: uppercase; letter-spacing: .02em; }
+.panel__card p { margin: 0; color: var(--mist); }
+.panel__tag { font: 600 .7rem/1 var(--f-ui); letter-spacing: .24em; color: var(--blue); margin-bottom: 12px; display: block; }
+.sig__bar { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 4vh; height: 2px; background: var(--line); z-index: 2; }
+.sig__bar i { display: block; height: 100%; width: 100%; transform-origin: left; transform: scaleX(0); background: var(--blue); box-shadow: 0 0 12px var(--blue); }
+
+/* ── highlights ───────────────────────────────────── */
+.highlights { padding-block: 18vh 14vh; }
+.hl { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: clamp(32px, 6vw, 96px); align-items: center; }
+.hl__copy { min-width: 0; }
+.moments { list-style: none; margin: 40px 0 0; padding: 0; display: grid; gap: 10px; max-width: 520px; }
+.moment {
+  width: 100%; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 4px 16px; text-align: left; cursor: pointer;
+  padding: 16px 18px 18px; background: rgba(7, 27, 54, .45); border: 1px solid var(--line); color: var(--white);
+  clip-path: var(--chamfer); position: relative; transition: background .3s, border-color .3s;
+  font: inherit;
+}
+.moment:hover { background: rgba(7, 27, 54, .8); }
+.moment.is-active { background: rgba(6, 158, 246, .14); border-color: rgba(6, 158, 246, .6); }
+.moment__t { grid-row: span 2; font: 600 .82rem/1.6 var(--f-ui); letter-spacing: .1em; color: var(--blue); font-variant-numeric: tabular-nums; }
+.moment__title { font: 400 1.45rem/1 var(--f-display); text-transform: uppercase; letter-spacing: .03em; }
+.moment__desc { color: var(--mist); font-size: .98rem; }
+.moment__prog { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; transform-origin: left; transform: scaleX(0); background: var(--blue); }
+.hl__tools { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+.phone { perspective: 1200px; }
+.phone__body {
+  --rx: 0deg; --ry: 0deg;
+  position: relative; width: clamp(250px, 27vw, 370px); aspect-ratio: 9 / 16; max-width: 100%;
+  border-radius: 38px; padding: 10px; background: linear-gradient(145deg, #12355f, #050f20 60%);
+  box-shadow: 0 0 0 1px rgba(169, 225, 255, .25), 0 40px 120px rgba(6, 158, 246, .35), inset 0 0 0 1px rgba(255, 255, 255, .06);
+  transform: rotateX(var(--rx)) rotateY(var(--ry)); transform-style: preserve-3d; transition: transform .25s ease-out;
+}
+.phone__body video { width: 100%; height: 100%; object-fit: cover; border-radius: 29px; background: #000; }
+.phone__glare { position: absolute; inset: 10px; border-radius: 29px; pointer-events: none; background: radial-gradient(circle at var(--gx, 30%) var(--gy, 20%), rgba(255, 255, 255, .22), transparent 45%); mix-blend-mode: soft-light; }
+.phone__notch { position: absolute; top: 18px; left: 50%; width: 84px; height: 22px; transform: translateX(-50%); background: #02060d; border-radius: 20px; z-index: 2; }
+
+/* ── roster ───────────────────────────────────────── */
+.roster { padding-block: 16vh 14vh; }
+.roster__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 20px 40px; margin-bottom: 48px; }
+.cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(10px, 1.4vw, 20px); }
+.card { perspective: 900px; outline: none; }
+.card__in {
+  --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 50%;
+  position: relative; aspect-ratio: 3 / 4.4; overflow: hidden; padding: 20px 18px; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;
+  background: radial-gradient(120% 80% at 50% 0%, #10345e 0%, #061226 62%);
+  border: 1px solid var(--line); clip-path: var(--chamfer);
+  transform: rotateX(var(--rx)) rotateY(var(--ry)); transform-style: preserve-3d; transition: transform .2s ease-out, border-color .3s;
+}
+.card:hover .card__in, .card:focus-visible .card__in { border-color: rgba(6, 158, 246, .8); }
+.card__emblem { position: absolute; left: 50%; top: 40%; width: 150%; transform: translate(-50%, -50%) translateZ(-20px); opacity: .13; filter: saturate(1.4); transition: opacity .4s, transform .6s; }
+.card:hover .card__emblem { opacity: .28; transform: translate(-50%, -54%) scale(1.06); }
+.card__icon { position: absolute; top: 18px; left: 18px; width: 34px; height: 34px; color: var(--ice); transform: translateZ(30px); }
+.card__lock { position: absolute; top: 22px; right: 16px; font: 600 .62rem/1 var(--f-ui); letter-spacing: .22em; color: var(--mist); }
+.card__role { margin: 0; font: 600 .72rem/1 var(--f-ui); letter-spacing: .24em; text-transform: uppercase; color: var(--blue); transform: translateZ(24px); }
+.card__name { margin: 0; font: 400 clamp(1.5rem, 2.1vw, 2.1rem)/.95 var(--f-display); text-transform: uppercase; transform: translateZ(36px); }
+.card__meta { margin: 0; color: var(--mist); font-size: .85rem; transform: translateZ(18px); }
+.card__shine {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s; mix-blend-mode: color-dodge;
+  background: radial-gradient(circle at var(--mx) var(--my), rgba(169, 225, 255, .45), transparent 42%),
+    linear-gradient(115deg, transparent 30%, rgba(6, 158, 246, .25) 45%, rgba(169, 225, 255, .35) 50%, rgba(6, 158, 246, .25) 55%, transparent 70%);
+  background-size: 100% 100%, 250% 250%; background-position: 0 0, var(--mx) var(--my);
+}
+.card:hover .card__shine, .card:focus-visible .card__shine { opacity: 1; }
+.card__flash { position: absolute; inset: 0; background: var(--ice); opacity: 0; pointer-events: none; mix-blend-mode: overlay; }
+
+/* ── join ─────────────────────────────────────────── */
+.join { padding-block: 16vh 12vh; }
+.join__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); gap: clamp(32px, 6vw, 96px); align-items: start; }
+.socials { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 34px; padding: 0; list-style: none; }
+.socials a {
+  display: inline-flex; align-items: center; gap: 10px; padding: 12px 16px; text-decoration: none;
+  font: 600 .74rem/1 var(--f-ui); letter-spacing: .18em; text-transform: uppercase;
+  border: 1px solid var(--line); clip-path: var(--chamfer); color: var(--white); background: rgba(7, 27, 54, .45); transition: background .3s, color .3s;
+}
+.socials a:hover { background: var(--blue); color: var(--night); }
+.socials svg { width: 16px; height: 16px; }
+.form {
+  display: grid; gap: 18px; padding: clamp(22px, 3vw, 36px); background: var(--glass); border: 1px solid var(--line);
+  clip-path: var(--chamfer); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+.form__row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.field { display: grid; gap: 8px; min-width: 0; }
+.field label { font: 600 .7rem/1 var(--f-ui); letter-spacing: .22em; text-transform: uppercase; color: var(--mist); }
+.field input, .field select, .field textarea {
+  width: 100%; font: 500 1rem/1.4 var(--f-body); color: var(--white); background: rgba(3, 10, 22, .55);
+  border: 1px solid var(--line); border-radius: 0; padding: 13px 14px; transition: border-color .25s, box-shadow .25s;
+}
+.field textarea { min-height: 96px; resize: vertical; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(6, 158, 246, .25); }
+.field select option { background: var(--navy); }
+.form__note { margin: 0; font-size: .9rem; color: var(--mist); }
+.form__ok { display: grid; gap: 8px; padding: 16px; border: 1px solid rgba(6, 158, 246, .6); background: rgba(6, 158, 246, .12); }
+.form__ok strong { font: 400 1.4rem/1 var(--f-display); text-transform: uppercase; letter-spacing: .03em; }
+.form__ok textarea { width: 100%; min-height: 120px; font: 500 .9rem/1.4 var(--f-ui); background: rgba(3, 10, 22, .6); color: var(--ice); border: 1px solid var(--line); padding: 10px; }
+
+/* ── footer ───────────────────────────────────────── */
+.footer { padding-block: 10vh calc(env(safe-area-inset-bottom, 0px) + 28px); overflow: hidden; }
+.footer__big {
+  margin: 0; font: 400 clamp(4.6rem, 19.5vw, 24rem)/.8 var(--f-display); text-transform: uppercase; text-align: center; white-space: nowrap;
+  color: transparent; -webkit-text-stroke: 1.5px rgba(169, 225, 255, .55);
+}
+.footer__big span { display: inline-block; }
+.footer__row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px 32px; margin-top: 40px; padding-top: 22px; border-top: 1px solid var(--line); font: 500 .8rem/1.4 var(--f-ui); letter-spacing: .08em; color: var(--mist); }
+.to-top { background: none; border: 1px solid var(--line); color: var(--white); padding: 12px 16px; cursor: pointer; font: 600 .72rem/1 var(--f-ui); letter-spacing: .2em; text-transform: uppercase; clip-path: var(--chamfer); }
+.to-top:hover { background: var(--blue); color: var(--night); }
+
+/* ── HUD & cursor ─────────────────────────────────── */
+.hud { position: fixed; right: var(--gutter); top: 50%; z-index: 40; transform: translateY(-50%); display: grid; justify-items: center; gap: 14px; pointer-events: none; }
+.hud__label { writing-mode: vertical-rl; font: 600 .66rem/1 var(--f-ui); letter-spacing: .3em; color: var(--mist); text-transform: uppercase; }
+.hud__label b { color: var(--ice); font-weight: 600; }
+.hud__bar { width: 1px; height: 120px; background: var(--line); position: relative; }
+.hud__bar i { position: absolute; inset: 0; transform-origin: top; transform: scaleY(0); background: var(--blue); box-shadow: 0 0 10px var(--blue); }
+.cursor, .cursor-dot { position: fixed; left: 0; top: 0; z-index: 300; pointer-events: none; border-radius: 50%; opacity: 0; }
+.cursor { width: 38px; height: 38px; margin: -19px 0 0 -19px; border: 1px solid rgba(169, 225, 255, .7); transition: width .3s, height .3s, margin .3s, background .3s, opacity .3s; }
+.cursor.is-hover { width: 70px; height: 70px; margin: -35px 0 0 -35px; background: rgba(6, 158, 246, .16); border-color: var(--blue); }
+.cursor-dot { width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; background: var(--ice); }
+.has-cursor .cursor, .has-cursor .cursor-dot { opacity: 1; }
+
+/* ── responsive ───────────────────────────────────── */
+@media (max-width: 980px) {
+  .hl, .join__grid { grid-template-columns: minmax(0, 1fr); }
+  .phone { justify-self: center; }
+  .cards { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 12px; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); scrollbar-width: thin; }
+  .card { flex: 0 0 min(64vw, 260px); scroll-snap-align: start; }
+}
+@media (max-width: 760px) {
+  .nav__links { display: none; }
+  .menu-btn { display: inline-block; }
+  .hud { display: none; }
+  .hero__foot { grid-template-columns: minmax(0, 1fr); }
+  .scroll-cue { display: none; }
+  .form__row { grid-template-columns: minmax(0, 1fr); }
+  .panel__card, .panel:nth-child(even) .panel__card { left: var(--gutter); right: auto; bottom: 12vh; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .grain, .scroll-cue i { animation: none; }
+  .btn::after { display: none; }
+  * { transition-duration: .01ms !important; }
+}
+</style>
+</head>
+<body class="no-js">
+<script>document.body.classList.remove("no-js");</script>
+
+<canvas id="gl" aria-hidden="true"></canvas>
+<img class="fallback-logo" src="assets/logo-512.png" alt="" aria-hidden="true">
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor" aria-hidden="true"></div><div class="cursor-dot" aria-hidden="true"></div>
+
+<div class="loader" id="loader" aria-hidden="true">
+  <div class="loader__inner">
+    <div class="loader__logo"><img class="ghost" src="assets/logo-512.png" alt=""><img class="fill" src="assets/logo-512.png" alt=""></div>
+    <div class="loader__count">CHARGEMENT <b id="loadPct">000</b></div>
+  </div>
+</div>
+
+<header class="nav" id="nav">
+  <a class="brand" href="#top" aria-label="Blue Hope, retour en haut"><img src="assets/logo-128.png" alt=""><span>BLUE HOPE</span></a>
+  <nav aria-label="Navigation principale">
+    <ul class="nav__links">
+      <li><a href="#equipe" data-scramble>L'équipe</a></li>
+      <li><a href="#jeu" data-scramble>Notre jeu</a></li>
+      <li><a href="#highlights" data-scramble>Highlights</a></li>
+      <li><a href="#roster" data-scramble>Roster</a></li>
+      <li><a href="#rejoindre" data-scramble>Rejoindre</a></li>
+    </ul>
+  </nav>
+  <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="mobileMenu">Menu</button>
+</header>
+<div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <a href="#equipe"><span>01</span>L'équipe</a>
+  <a href="#jeu"><span>02</span>Notre jeu</a>
+  <a href="#highlights"><span>03</span>Highlights</a>
+  <a href="#roster"><span>04</span>Roster</a>
+  <a href="#rejoindre"><span>05</span>Rejoindre</a>
+</div>
+
+<aside class="hud" aria-hidden="true">
+  <span class="hud__label"><b id="hudNum">01</b> / <span id="hudName">Accueil</span></span>
+  <span class="hud__bar"><i id="hudBar"></i></span>
+</aside>
+
+<main>
+  <!-- HERO -->
+  <section class="hero wrap" id="top" data-pose="hero" data-name="Accueil">
+    <span class="hud-corner tl" aria-hidden="true"></span><span class="hud-corner tr" aria-hidden="true"></span>
+    <div class="hero__meta"><span>Équipe esport</span><span>Valorant</span><span>Saison 2026</span></div>
+    <h1 class="hero__title" aria-label="Blue Hope">
+      <span class="split-line"><span data-chars>Blue</span></span>
+      <span class="split-line"><span data-chars>Hope</span></span>
+    </h1>
+    <div class="hero__foot">
+      <div>
+        <p class="hero__sub">Un aigle sur le maillot, cinq joueurs derrière. On joue chaque round pour le gagner.</p>
+        <div class="hero__ctas">
+          <a class="btn" href="#highlights" data-magnetic>Voir les highlights
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+          <a class="btn btn--ghost" href="#rejoindre" data-magnetic>Rejoindre l'équipe</a>
+        </div>
+      </div>
+      <div class="scroll-cue" aria-hidden="true">SCROLL<i></i></div>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquees" aria-hidden="true">
+    <div class="marquee marquee--solid"><div class="marquee__track" data-marquee="1"></div></div>
+    <div class="marquee marquee--outline"><div class="marquee__track" data-marquee="-1"></div></div>
+  </div>
+
+  <!-- MANIFESTO -->
+  <section class="manifesto wrap" id="equipe" data-pose="manifesto" data-name="L'équipe">
+    <p class="eyebrow">L'équipe</p>
+    <p class="manifesto__text" data-words>Blue Hope, c'est une équipe Valorant qui joue ensemble avant de jouer pour elle. On travaille la visée, on soigne les calls, et quand le round se joue à un contre deux, on veut que ce soit l'un des nôtres qui reste debout.</p>
+    <ul class="manifesto__tags"><li>Compétition</li><li>Entraînement</li><li>Esprit d'équipe</li><li>Valorant</li></ul>
+  </section>
+
+  <!-- SIGNATURE (pinned horizontal) -->
+  <section class="sig" id="jeu" data-pose="sig" data-name="Notre jeu">
+    <div class="sig__head"><p class="eyebrow">Notre jeu</p></div>
+    <div class="sig__track">
+      <article class="panel"><p class="panel__word">Aim</p>
+        <div class="panel__card"><span class="panel__tag">VISER</span><h3>Viser la tête</h3><p>Un duel se gagne avant le premier tir : placement, crosshair, sang-froid.</p></div></article>
+      <article class="panel"><p class="panel__word">Comms</p>
+        <div class="panel__card"><span class="panel__tag">PARLER</span><h3>Parler juste</h3><p>Des calls courts, une info claire, cinq joueurs sur la même ligne.</p></div></article>
+      <article class="panel"><p class="panel__word">Clutch</p>
+        <div class="panel__card"><span class="panel__tag">FINIR</span><h3>Finir le round</h3><p>Quand tout le monde est tombé, il reste encore un joueur à battre.</p></div></article>
+      <article class="panel"><p class="panel__word">Mental</p>
+        <div class="panel__card"><span class="panel__tag">TENIR</span><h3>Rester debout</h3><p>Un round perdu ne change rien. On reset, on rejoue.</p></div></article>
+    </div>
+    <div class="sig__bar" aria-hidden="true"><i id="sigBar"></i></div>
+  </section>
+
+  <!-- HIGHLIGHTS -->
+  <section class="highlights wrap" id="highlights" data-pose="highlights" data-name="Highlights">
+    <div class="hl">
+      <div class="hl__copy">
+        <p class="eyebrow">Highlights</p>
+        <h2 class="h-section"><span class="split-line"><span>L'edit</span></span><span class="split-line"><span class="stroke">de la saison</span></span></h2>
+        <p class="lead">Dix-sept secondes de one taps, un clutch en 1v2 et un caster qui ne tient plus sur sa chaise. Clique sur un moment pour y aller.</p>
+        <ul class="moments" id="moments">
+          <li><button class="moment" data-t="1.0" data-end="3.4" type="button"><span class="moment__t">00:01</span><span class="moment__title">One tap</span><span class="moment__desc">Une balle, un kill, et le drop part.</span><i class="moment__prog"></i></button></li>
+          <li><button class="moment" data-t="9.3" data-end="12.0" type="button"><span class="moment__t">00:09</span><span class="moment__title">Clutch 1v2</span><span class="moment__desc">Seul contre deux, le round est ramené.</span><i class="moment__prog"></i></button></li>
+          <li><button class="moment" data-t="12.0" data-end="15.4" type="button"><span class="moment__t">00:12</span><span class="moment__title">Oui ! Oui !</span><span class="moment__desc">Le kill final et la réaction du caster.</span><i class="moment__prog"></i></button></li>
+        </ul>
+        <div class="hl__tools"><button class="btn btn--ghost" id="soundBtn" type="button" data-magnetic>Activer le son</button></div>
+      </div>
+      <div class="phone" data-tilt>
+        <div class="phone__body">
+          <span class="phone__notch" aria-hidden="true"></span>
+          <video id="hlVideo" src="assets/highlights.mp4" poster="assets/highlights-poster.jpg" muted loop playsinline preload="metadata" aria-label="Edit highlights Blue Hope"></video>
+          <span class="phone__glare" aria-hidden="true"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROSTER -->
+  <section class="roster wrap" id="roster" data-pose="roster" data-name="Roster">
+    <div class="roster__head">
+      <div><p class="eyebrow">Roster</p><h2 class="h-section"><span class="split-line"><span>Line-up</span></span><span class="split-line"><span class="stroke">2026</span></span></h2></div>
+      <p class="lead">Cinq rôles, une seule équipe. Les joueurs seront dévoilés ici.</p>
+    </div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <!-- JOIN -->
+  <section class="join wrap" id="rejoindre" data-pose="join" data-name="Rejoindre">
+    <div class="join__grid">
+      <div>
+        <p class="eyebrow">Recrutement</p>
+        <h2 class="h-section"><span class="split-line"><span>Prends</span></span><span class="split-line"><span class="stroke">ton envol</span></span></h2>
+        <p class="lead">On cherche des joueurs et du staff motivés : joueurs, coach, analyste, monteur. Remplis le formulaire, ta candidature est prête à envoyer sur notre Discord.</p>
+        <ul class="socials" id="socials"></ul>
+      </div>
+      <form class="form" id="joinForm" novalidate>
+        <div class="form__row">
+          <div class="field"><label for="f-riot">Riot ID</label><input id="f-riot" name="riot" placeholder="Pseudo#TAG" required autocomplete="off"></div>
+          <div class="field"><label for="f-discord">Discord</label><input id="f-discord" name="discord" placeholder="pseudo" required autocomplete="off"></div>
+        </div>
+        <div class="form__row">
+          <div class="field"><label for="f-rank">Rang actuel</label>
+            <select id="f-rank" name="rank"><option>Fer</option><option>Bronze</option><option>Argent</option><option>Or</option><option selected>Platine</option><option>Diamant</option><option>Ascendant</option><option>Immortel</option><option>Radiant</option></select></div>
+          <div class="field"><label for="f-role">Rôle</label>
+            <select id="f-role" name="role"><option>Duelliste</option><option>Initiateur</option><option>Contrôleur</option><option>Sentinelle</option><option>Flex</option><option>Coach</option><option>Analyste</option><option>Monteur / créa</option></select></div>
+        </div>
+        <div class="field"><label for="f-msg">Pourquoi Blue Hope ?</label><textarea id="f-msg" name="msg" placeholder="Ton expérience, tes disponibilités, ce que tu veux apporter."></textarea></div>
+        <button class="btn" type="submit" data-magnetic>Préparer ma candidature
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
+        <p class="form__note" id="formNote">Ta candidature est copiée, tu n'as plus qu'à la coller sur notre Discord.</p>
+        <div class="form__ok" id="formOk" hidden role="status"></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer" data-pose="footer" data-name="Blue Hope">
+    <p class="footer__big" aria-hidden="true"><span>Blue</span> <span>Hope</span></p>
+    <div class="wrap footer__row">
+      <span>© 2026 Blue Hope Esport</span>
+      <span>Valorant est une marque de Riot Games. Site non affilié à Riot Games.</span>
+      <button class="to-top" id="toTop" type="button">Retour en haut ↑</button>
+    </div>
+  </footer>
+</main>
+
+<script id="logo-data" type="application/json">{"aspect":0.8556,"layers":[{"c":"#05162c","s":[{"o":[-0.9945,0.8473,-0.9963,0.7277,-0.9908,0.6477,-0.9752,0.5584,-0.9531,0.4885,-0.9301,0.4416,-0.8979,0.3974,-0.8335,0.3293,-0.782,0.2843,-0.7838,0.2824,-0.8022,0.2925,-0.8776,0.345,-0.9402,0.3965,-0.9632,0.4204,-0.9687,0.4232,-0.9798,0.4223,-0.9834,0.4167,-0.9834,0.4066,-0.9678,0.3579,-0.9531,0.322,-0.9117,0.2429,-0.8519,0.1564,-0.7985,0.1012,-0.7286,0.0561,-0.6311,0.0101,-0.632,0.0074,-0.6605,0.012,-0.7443,0.0405,-0.7553,0.0396,-0.759,0.034,-0.7553,0.0184,-0.6992,-0.0497,-0.6311,-0.1159,-0.5722,-0.1638,-0.5115,-0.207,-0.4453,-0.2475,-0.3698,-0.287,-0.2889,-0.3238,-0.2236,-0.3496,-0.184,-0.3615,-0.1748,-0.3606,-0.1573,-0.3422,-0.1527,-0.3422,-0.1592,-0.3588,-0.1868,-0.4066,-0.2806,-0.5511,-0.2824,-0.5649,-0.1785,-0.6697,-0.1647,-0.6725,-0.1555,-0.6633,-0.1095,-0.5271,-0.1049,-0.5262,-0.1076,-0.5612,-0.1279,-0.6835,-0.1279,-0.701,-0.0083,-0.8546,0.0055,-0.8546,0.1251,-0.701,0.1251,-0.6817,0.103,-0.5483,0.1021,-0.5198,0.1067,-0.5244,0.149,-0.6523,0.1555,-0.6679,0.1619,-0.6725,0.1757,-0.6697,0.2797,-0.5649,0.2797,-0.5566,0.1803,-0.4011,0.1582,-0.3625,0.15,-0.3413,0.1536,-0.3413,0.172,-0.3606,0.1858,-0.3606,0.264,-0.333,0.3671,-0.287,0.4462,-0.2456,0.5308,-0.1923,0.6026,-0.138,0.6467,-0.0994,0.6927,-0.0534,0.7387,-0.0,0.7553,0.023,0.7562,0.034,0.7525,0.0396,0.7415,0.0405,0.655,0.011,0.6311,0.0064,0.6265,0.0083,0.7111,0.0488,0.7663,0.08,0.7976,0.103,0.8344,0.1398,0.8776,0.195,0.9236,0.2686,0.9558,0.3349,0.9798,0.402,0.9798,0.4195,0.9742,0.4232,0.965,0.4223,0.908,0.3707,0.8638,0.3367,0.7921,0.2879,0.7774,0.2824,0.8326,0.3312,0.8896,0.3901,0.931,0.4471,0.9558,0.5032,0.9724,0.5584,0.988,0.6477,0.9954,0.7387,0.9917,0.8473,0.988,0.8556,0.9761,0.8556,0.9282,0.7654,0.8841,0.6918,0.827,0.6109,0.7801,0.552,0.7231,0.4876,0.6449,0.4094,0.5603,0.3339,0.4232,0.2217,0.4094,0.2033,0.3597,0.0957,0.3229,0.0386,0.2889,-0.0037,0.2603,-0.0322,0.1914,-0.0846,0.1886,-0.1012,0.1573,-0.0754,0.1371,-0.0442,0.127,-0.0092,0.1316,0.0147,0.1426,0.034,0.1546,0.0451,0.1757,0.0552,0.2006,0.0598,0.2254,0.0543,0.2318,0.0478,0.2364,0.0331,0.2502,0.0331,0.2594,0.0442,0.2668,0.0626,0.2659,0.0984,0.2557,0.115,0.242,0.127,0.2153,0.1371,0.1978,0.1527,0.1582,0.1739,0.1187,0.1858,0.0966,0.1895,0.0644,0.1895,0.0193,0.1812,-0.0718,0.1472,-0.0727,0.1343,-0.069,0.1288,-0.0423,0.1233,-0.0368,0.1187,-0.0699,0.0929,-0.0994,0.0635,-0.1214,0.0359,-0.1242,0.0221,-0.1205,0.0166,-0.1095,0.0156,-0.0948,0.0212,-0.0957,0.0147,-0.1472,-0.0626,-0.172,-0.0874,-0.1932,-0.1021,-0.196,-0.0837,-0.2576,-0.0377,-0.2971,0.0018,-0.3404,0.0589,-0.3818,0.1325,-0.4085,0.196,-0.4259,0.2217,-0.6035,0.3689,-0.6789,0.4388,-0.7295,0.4913,-0.8142,0.5906,-0.8648,0.6587,-0.92,0.7452,-0.9788,0.8556,-0.9908,0.8556],"h":[]}]},{"c":"#002b53","s":[{"o":[-0.9871,0.8399,-0.989,0.7397,-0.9798,0.6329,-0.9641,0.5529,-0.9494,0.5069,-0.9319,0.4655,-0.8905,0.4029,-0.8206,0.3312,-0.7617,0.2815,-0.6679,0.2116,-0.6789,0.2125,-0.7139,0.23,-0.8096,0.2852,-0.9034,0.3523,-0.9715,0.4121,-0.9715,0.3983,-0.9494,0.3376,-0.908,0.2557,-0.8464,0.1656,-0.8004,0.1159,-0.7783,0.0984,-0.7341,0.0708,-0.6679,0.0368,-0.6063,0.011,-0.5244,-0.0175,-0.5308,-0.0202,-0.6136,-0.0083,-0.6762,0.0064,-0.7397,0.0285,-0.7489,0.0285,-0.7157,-0.0166,-0.655,-0.081,-0.5961,-0.1325,-0.5317,-0.1812,-0.4508,-0.2328,-0.3404,-0.2907,-0.2456,-0.3312,-0.1868,-0.3514,-0.1757,-0.3496,-0.149,-0.3165,-0.1279,-0.2833,-0.1214,-0.2797,-0.1343,-0.3266,-0.1518,-0.3661,-0.1978,-0.4434,-0.2741,-0.5612,-0.173,-0.6605,-0.1665,-0.6624,-0.126,-0.5492,-0.0837,-0.4204,-0.081,-0.4213,-0.1187,-0.6973,-0.0028,-0.8436,0.0083,-0.8353,0.1168,-0.6955,0.092,-0.5336,0.08,-0.4269,0.0819,-0.425,0.0865,-0.4324,0.1288,-0.5639,0.1656,-0.6633,0.2705,-0.5621,0.2695,-0.5566,0.2006,-0.4526,0.1472,-0.3625,0.1316,-0.3257,0.1205,-0.2843,0.127,-0.287,0.172,-0.3477,0.1785,-0.3523,0.2833,-0.3146,0.402,-0.2585,0.4738,-0.218,0.5731,-0.149,0.6283,-0.103,0.6725,-0.0607,0.7111,-0.0184,0.7461,0.0285,0.7369,0.0285,0.6771,0.0074,0.6063,-0.0092,0.5474,-0.0184,0.5216,-0.0175,0.6219,0.0184,0.6762,0.0423,0.7397,0.0754,0.7958,0.1141,0.8473,0.1711,0.8758,0.2098,0.9126,0.2686,0.9522,0.3505,0.9706,0.4057,0.9706,0.4112,0.9641,0.4094,0.9319,0.3781,0.8914,0.345,0.8068,0.2852,0.6762,0.2125,0.6651,0.2116,0.7516,0.276,0.8215,0.3349,0.8841,0.3993,0.9126,0.4361,0.9273,0.4618,0.954,0.5271,0.9752,0.6201,0.9862,0.7341,0.9844,0.8399,0.9816,0.8427,0.9006,0.6992,0.8436,0.6164,0.7838,0.5409,0.6955,0.4453,0.621,0.3744,0.5382,0.3027,0.4324,0.218,0.4121,0.1868,0.3781,0.1086,0.356,0.0699,0.3201,0.0184,0.2622,-0.0432,0.1996,-0.0911,0.2015,-0.0975,0.2383,-0.1426,0.2383,-0.1472,0.2226,-0.1398,0.1877,-0.115,0.1564,-0.0892,0.1408,-0.0699,0.1224,-0.0322,0.1196,0.0046,0.1242,0.023,0.1371,0.0432,0.1546,0.0561,0.1757,0.0653,0.2263,0.0653,0.2355,0.0598,0.242,0.0451,0.2466,0.0442,0.2576,0.0653,0.2594,0.0819,0.2567,0.0957,0.2383,0.1178,0.2079,0.1297,0.1978,0.1408,0.1757,0.1546,0.1417,0.1702,0.0984,0.1803,0.0626,0.1803,0.0396,0.1766,-0.0064,0.1628,-0.0423,0.1463,-0.0626,0.1408,-0.0616,0.1371,-0.0524,0.1334,-0.0101,0.1297,-0.0055,0.1251,-0.0331,0.1086,-0.0681,0.0819,-0.1095,0.0359,-0.1132,0.0258,-0.0764,0.0423,-0.0561,0.0469,-0.0929,0.0028,-0.1417,-0.0718,-0.196,-0.1187,-0.2401,-0.1463,-0.2401,-0.1417,-0.2033,-0.0948,-0.2042,-0.0892,-0.2594,-0.0488,-0.3174,0.011,-0.3422,0.0442,-0.3726,0.0938,-0.4002,0.149,-0.4112,0.1794,-0.4296,0.2107,-0.4462,0.2272,-0.6164,0.3671,-0.6771,0.4241,-0.7608,0.5115,-0.8252,0.5888,-0.8832,0.6679,-0.9439,0.7672,-0.9798,0.8381,-0.9844,0.8427],"h":[[0.1279,0.1343,0.1343,0.1362,0.161,0.1297,0.1665,0.1242,0.1564,0.1168,0.1426,0.1168,0.1334,0.1233]]}]},{"c":"#00528a","s":[{"o":[-0.9871,0.8399,-0.988,0.8013,-0.9844,0.7939,-0.9844,0.7728,-0.9742,0.7029,-0.9586,0.6375,-0.9439,0.5943,-0.9466,0.5925,-0.9706,0.6145,-0.9752,0.6136,-0.9752,0.6081,-0.9558,0.5566,-0.9577,0.552,-0.9623,0.552,-0.9558,0.5253,-0.9319,0.4655,-0.8905,0.4029,-0.8206,0.3312,-0.7617,0.2815,-0.6679,0.2116,-0.6789,0.2125,-0.7452,0.2466,-0.8096,0.2852,-0.8997,0.3477,-0.8951,0.3367,-0.8445,0.2649,-0.8188,0.2355,-0.7912,0.2098,-0.7534,0.184,-0.7019,0.1205,-0.7029,0.1168,-0.7084,0.1168,-0.747,0.1297,-0.7341,0.1086,-0.6799,0.0432,-0.6063,0.011,-0.5244,-0.0175,-0.5308,-0.0202,-0.6201,-0.0064,-0.598,-0.0294,-0.5097,-0.0948,-0.4177,-0.15,-0.3349,-0.1914,-0.2033,-0.2456,-0.207,-0.2557,-0.2521,-0.3238,-0.2502,-0.3293,-0.2052,-0.3459,-0.1785,-0.3514,-0.149,-0.3165,-0.1279,-0.2833,-0.1214,-0.2797,-0.1343,-0.3266,-0.1518,-0.3661,-0.2337,-0.4995,-0.173,-0.5593,-0.1674,-0.5612,-0.1095,-0.3956,-0.1067,-0.3928,-0.1049,-0.3947,-0.1187,-0.483,-0.1187,-0.4949,-0.1132,-0.5023,-0.1076,-0.494,-0.0828,-0.4195,-0.081,-0.425,-0.1076,-0.6118,-0.0018,-0.7415,0.0101,-0.7305,0.1049,-0.6118,0.092,-0.5336,0.08,-0.4287,0.0819,-0.425,0.0846,-0.4278,0.1049,-0.4922,0.1122,-0.5014,0.1159,-0.483,0.104,-0.3956,0.1104,-0.402,0.1638,-0.5593,0.1702,-0.5593,0.2309,-0.4995,0.1472,-0.3625,0.1316,-0.3257,0.1205,-0.2843,0.127,-0.287,0.1564,-0.3293,0.1757,-0.3514,0.1969,-0.3477,0.2466,-0.3293,0.2466,-0.3201,0.2098,-0.2649,0.2006,-0.2456,0.3155,-0.1987,0.4278,-0.1426,0.5179,-0.0874,0.6063,-0.0202,0.6173,-0.0064,0.5474,-0.0184,0.5216,-0.0175,0.6219,0.0184,0.6753,0.0423,0.7295,0.1067,0.7443,0.1297,0.7056,0.1168,0.7001,0.1168,0.6992,0.1205,0.7507,0.184,0.7884,0.2098,0.8123,0.2318,0.8454,0.2705,0.885,0.3257,0.897,0.3477,0.7737,0.2649,0.6762,0.2125,0.6651,0.2116,0.7516,0.276,0.8215,0.3349,0.8841,0.3993,0.9126,0.4361,0.9273,0.4618,0.954,0.5271,0.9595,0.5529,0.9549,0.552,0.9531,0.5566,0.9687,0.5934,0.9715,0.6155,0.9678,0.6145,0.9439,0.5925,0.9411,0.5943,0.954,0.6302,0.9687,0.6891,0.9816,0.7728,0.9816,0.7921,0.9853,0.8004,0.9844,0.8399,0.9816,0.8427,0.9006,0.6992,0.8436,0.6164,0.7728,0.5281,0.6955,0.4453,0.621,0.3744,0.5382,0.3027,0.4453,0.2291,0.425,0.2088,0.4121,0.1868,0.3781,0.1086,0.356,0.0699,0.3201,0.0184,0.2622,-0.0432,0.1996,-0.0911,0.2015,-0.0975,0.2383,-0.1426,0.2383,-0.1472,0.2226,-0.1398,0.1877,-0.115,0.1564,-0.0892,0.1408,-0.0699,0.1224,-0.0322,0.1196,0.0046,0.1242,0.023,0.1371,0.0432,0.1546,0.0561,0.1757,0.0653,0.2263,0.0653,0.2355,0.0598,0.242,0.0451,0.2466,0.0442,0.2576,0.0653,0.2594,0.0819,0.2567,0.0957,0.2383,0.1178,0.2079,0.1297,0.1978,0.1408,0.1757,0.1546,0.1417,0.1702,0.0984,0.1803,0.0626,0.1803,0.0396,0.1766,-0.0064,0.1628,-0.0423,0.1463,-0.0626,0.1408,-0.0616,0.1371,-0.0524,0.1334,-0.0101,0.1297,-0.0055,0.1251,-0.0331,0.1086,-0.0681,0.0819,-0.1095,0.0359,-0.1132,0.0258,-0.0764,0.0423,-0.0561,0.0469,-0.0929,0.0028,-0.1417,-0.0718,-0.196,-0.1187,-0.2401,-0.1463,-0.2401,-0.1417,-0.2033,-0.0948,-0.2042,-0.0892,-0.2594,-0.0488,-0.3174,0.011,-0.3422,0.0442,-0.3726,0.0938,-0.4002,0.149,-0.4112,0.1794,-0.4296,0.2107,-0.4462,0.2272,-0.6164,0.3671,-0.6771,0.4241,-0.7608,0.5115,-0.8252,0.5888,-0.8832,0.6679,-0.9439,0.7672,-0.9798,0.8381,-0.9844,0.8427],"h":[[0.1279,0.1343,0.1343,0.1362,0.161,0.1297,0.1665,0.1242,0.1564,0.1168,0.1426,0.1168,0.1334,0.1233]]}]},{"c":"#0065a6","s":[{"o":[-0.9853,0.8372,-0.9742,0.7544,-0.9512,0.6651,-0.92,0.5971,-0.8776,0.54,-0.8795,0.5382,-0.8905,0.5446,-0.9669,0.6099,-0.9742,0.6118,-0.9669,0.5851,-0.9531,0.5529,-0.9549,0.5474,-0.9614,0.5483,-0.9558,0.5253,-0.9328,0.4673,-0.9172,0.4397,-0.8905,0.4029,-0.8206,0.3312,-0.7617,0.2815,-0.6679,0.2116,-0.6789,0.2125,-0.7139,0.23,-0.8188,0.2907,-0.7948,0.2631,-0.7516,0.2328,-0.7019,0.1702,-0.7056,0.1665,-0.7452,0.1794,-0.7378,0.1656,-0.6863,0.103,-0.6274,0.046,-0.5704,-0.0018,-0.5253,-0.0166,-0.5262,-0.0193,-0.5409,-0.0212,-0.4913,-0.0561,-0.4361,-0.0892,-0.2962,-0.1582,-0.2125,-0.1914,-0.1886,-0.1987,-0.1739,-0.1996,-0.2015,-0.2484,-0.2475,-0.3174,-0.2511,-0.3275,-0.2052,-0.3459,-0.1785,-0.3514,-0.1518,-0.3201,-0.1233,-0.2787,-0.1214,-0.2843,-0.1417,-0.3459,-0.2134,-0.4692,-0.1711,-0.5097,-0.1665,-0.5097,-0.1076,-0.3413,-0.104,-0.3238,-0.0948,-0.3073,-0.0948,-0.3312,-0.1187,-0.4867,-0.1178,-0.4959,-0.1113,-0.5014,-0.0828,-0.4195,-0.081,-0.425,-0.1003,-0.5722,-0.092,-0.5787,-0.0028,-0.6909,0.0083,-0.6826,0.0975,-0.5695,0.0828,-0.4637,0.0819,-0.425,0.1095,-0.4995,0.115,-0.4959,0.1159,-0.4848,0.0902,-0.3146,0.092,-0.3063,0.0994,-0.3174,0.1638,-0.5087,0.1684,-0.5106,0.2107,-0.4683,0.1472,-0.3625,0.1316,-0.3257,0.1205,-0.2843,0.1233,-0.2833,0.1564,-0.3293,0.1785,-0.3523,0.2475,-0.3284,0.2475,-0.3229,0.2042,-0.2576,0.1711,-0.1987,0.1877,-0.1987,0.2935,-0.1582,0.4094,-0.1021,0.4646,-0.0708,0.5373,-0.0221,0.5373,-0.0193,0.5235,-0.0193,0.5225,-0.0166,0.5667,-0.0018,0.6762,0.0957,0.7351,0.1656,0.7424,0.1794,0.7029,0.1665,0.6992,0.1702,0.7489,0.2328,0.7939,0.2649,0.816,0.2907,0.7121,0.2309,0.6762,0.2125,0.6651,0.2116,0.8013,0.3165,0.8694,0.3827,0.8933,0.4103,0.9181,0.4453,0.9448,0.5014,0.9595,0.5465,0.9586,0.5501,0.9512,0.5483,0.9503,0.552,0.9706,0.6127,0.9641,0.6099,0.9522,0.5971,0.8795,0.5382,0.874,0.5391,0.9209,0.6026,0.954,0.6799,0.9696,0.7433,0.9788,0.8151,0.9825,0.8243,0.9816,0.8399,0.9752,0.8344,0.9338,0.7544,0.9006,0.6992,0.8638,0.644,0.7728,0.5281,0.6955,0.4453,0.621,0.3744,0.5382,0.3027,0.4324,0.218,0.4259,0.2042,0.4158,0.1122,0.3753,0.0515,0.3551,0.0276,0.3174,-0.0083,0.2751,-0.0396,0.2502,-0.0524,0.1996,-0.0911,0.2015,-0.0975,0.2383,-0.1426,0.2383,-0.1472,0.1987,-0.1233,0.1555,-0.0883,0.1325,-0.057,0.1224,-0.0322,0.1196,-0.0166,0.1224,0.0184,0.138,0.0442,0.1546,0.0561,0.1757,0.0653,0.2254,0.0662,0.2116,0.0745,0.1647,0.0828,0.1904,0.0994,0.1996,0.1159,0.1996,0.127,0.1757,0.1435,0.138,0.161,0.1012,0.1711,0.058,0.1766,0.0156,0.1702,-0.0635,0.1398,-0.0524,0.1334,-0.0101,0.1297,-0.0055,0.1251,-0.0432,0.0984,-0.0902,0.0405,-0.0892,0.0368,-0.0598,0.0478,-0.0561,0.0451,-0.0929,0.0028,-0.1417,-0.0718,-0.196,-0.1187,-0.2401,-0.1463,-0.2401,-0.1417,-0.2033,-0.0948,-0.2042,-0.0892,-0.3201,-0.0083,-0.3597,0.0294,-0.3781,0.0515,-0.4186,0.1122,-0.4296,0.2088,-0.4333,0.2144,-0.6164,0.3671,-0.6771,0.4241,-0.7608,0.5115,-0.8252,0.5888,-0.8832,0.6679,-0.9439,0.7672,-0.9825,0.8399],"h":[[0.1279,0.1343,0.1343,0.1362,0.161,0.1297,0.1665,0.1242,0.1564,0.1168,0.1426,0.1168,0.1334,0.1233]]}]},{"c":"#049cf3","s":[{"o":[0.0764,0.173,0.0386,0.1739,0.0193,0.1711,-0.0635,0.1398,-0.0524,0.1334,-0.0101,0.1297,-0.0055,0.1251,-0.0405,0.0984,-0.0782,0.0561,-0.0874,0.0386,-0.0598,0.0478,-0.0561,0.0451,-0.0929,0.0028,-0.1417,-0.0718,-0.172,-0.1003,-0.218,-0.1343,-0.2171,-0.138,-0.1978,-0.1454,-0.1776,-0.1481,-0.138,-0.0975,-0.126,-0.0773,-0.1205,-0.0754,-0.1224,-0.0911,-0.1463,-0.1564,-0.2502,-0.3247,-0.2502,-0.3284,-0.2052,-0.3459,-0.1785,-0.3514,-0.149,-0.3165,-0.1279,-0.2833,-0.1214,-0.2797,-0.1417,-0.3459,-0.1932,-0.4342,-0.1914,-0.4397,-0.173,-0.4581,-0.1674,-0.46,-0.1076,-0.2898,-0.0874,-0.2217,-0.081,-0.2171,-0.0911,-0.3165,-0.1178,-0.4931,-0.1132,-0.5005,-0.1095,-0.4986,-0.0828,-0.4195,-0.081,-0.425,-0.0938,-0.5271,-0.0018,-0.6403,0.0101,-0.6293,0.0911,-0.5271,0.081,-0.4453,0.0819,-0.425,0.1067,-0.4959,0.1113,-0.4986,0.1159,-0.4922,0.0957,-0.368,0.0773,-0.2245,0.0782,-0.2134,0.0828,-0.2153,0.1435,-0.402,0.1665,-0.46,0.1886,-0.4397,0.1895,-0.4342,0.1389,-0.345,0.1233,-0.3008,0.1205,-0.2843,0.127,-0.287,0.1564,-0.3293,0.1757,-0.3514,0.1969,-0.3477,0.2475,-0.3275,0.1592,-0.1849,0.1352,-0.1362,0.1178,-0.0828,0.1196,-0.0745,0.1748,-0.1472,0.1812,-0.149,0.195,-0.1454,0.2153,-0.1362,0.1564,-0.0892,0.138,-0.0662,0.1224,-0.0322,0.1196,0.0046,0.1224,0.0184,0.1316,0.0359,0.1546,0.0561,0.184,0.0672,0.2217,0.0681,0.2015,0.0754,0.1555,0.0791,0.15,0.0819,0.1509,0.0846,0.1739,0.0902,0.1886,0.0994,0.1996,0.1187,0.1996,0.1251,0.1665,0.1472,0.1343,0.161],"h":[[0.1279,0.1343,0.1343,0.1362,0.161,0.1297,0.1665,0.1242,0.1564,0.1168,0.1426,0.1168,0.1334,0.1233]]},{"o":[-0.9706,0.6099,-0.9623,0.5768,-0.9439,0.5299,-0.9034,0.4517,-0.8445,0.3661,-0.805,0.322,-0.7544,0.2852,-0.6973,0.2539,-0.6044,0.2134,-0.517,0.1831,-0.5225,0.1803,-0.5501,0.1822,-0.6329,0.1969,-0.7461,0.23,-0.7268,0.2006,-0.6605,0.127,-0.598,0.0718,-0.5538,0.0377,-0.4471,-0.0322,-0.3726,-0.0718,-0.3017,-0.1049,-0.2355,-0.1316,-0.2291,-0.1288,-0.2033,-0.0948,-0.2042,-0.0892,-0.2438,-0.0607,-0.2797,-0.0405,-0.3201,-0.0101,-0.3597,0.0276,-0.3855,0.0589,-0.4204,0.115,-0.4305,0.207,-0.4462,0.2272,-0.563,0.3211,-0.6523,0.402,-0.7378,0.4434,-0.7948,0.4765,-0.8721,0.529],"h":[]},{"o":[0.9678,0.6099,0.8914,0.5455,0.8031,0.4839,0.724,0.4379,0.6495,0.402,0.5492,0.3119,0.4324,0.218,0.4278,0.2088,0.4177,0.115,0.402,0.0865,0.368,0.0405,0.3303,0.0009,0.2898,-0.0313,0.2429,-0.0589,0.1996,-0.0911,0.2015,-0.0975,0.2245,-0.127,0.2328,-0.1316,0.2824,-0.1122,0.3505,-0.081,0.4443,-0.0322,0.5437,0.0322,0.632,0.103,0.6891,0.1601,0.7424,0.2254,0.7424,0.23,0.6927,0.2134,0.6716,0.2098,0.6467,0.1996,0.5455,0.1822,0.5198,0.1803,0.5143,0.1831,0.6017,0.2134,0.6946,0.2539,0.7663,0.2944,0.8013,0.322,0.8454,0.3717,0.8997,0.4508,0.9448,0.5382,0.965,0.5925],"h":[]},{"o":[0.9724,0.8234,0.9678,0.8197,0.9338,0.7544,0.9006,0.6992,0.8436,0.6164,0.7728,0.5281,0.6771,0.4269,0.7185,0.4535,0.805,0.5225,0.8638,0.5796,0.9108,0.6366,0.9393,0.6909,0.954,0.7314,0.9696,0.7948],"h":[]},{"o":[-0.9752,0.8234,-0.9669,0.77,-0.9494,0.7111,-0.9264,0.6587,-0.908,0.6293,-0.8721,0.5851,-0.8243,0.5373,-0.7636,0.4857,-0.701,0.4388,-0.6872,0.4324,-0.7939,0.5501,-0.8666,0.644,-0.9071,0.7047,-0.9531,0.7838,-0.9706,0.8197],"h":[]}]},{"c":"#e8f6ff","s":[{"o":[0.1288,0.1343,0.1343,0.1233,0.1426,0.1178,0.1564,0.1178,0.1656,0.1242,0.161,0.1288,0.1343,0.1352],"h":[]}]}]}</script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   Contenu modifiable : roster et liens des réseaux.
+   Remplace "À annoncer" par les pseudos et "#" par vos vrais liens.
+   ═══════════════════════════════════════════════════════════════ */
+const CONFIG = {
+  roster: [
+    { role: "Duelliste",  name: "À annoncer", icon: "duelist" },
+    { role: "Initiateur", name: "À annoncer", icon: "initiator" },
+    { role: "Contrôleur", name: "À annoncer", icon: "controller" },
+    { role: "Sentinelle", name: "À annoncer", icon: "sentinel" },
+    { role: "Flex",       name: "À annoncer", icon: "flex" },
+  ],
+  links: { Discord: "#", TikTok: "#", Twitch: "#", X: "#", YouTube: "#" },
+};
+
+(() => {
+  "use strict";
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const finePointer = matchMedia("(pointer: fine)").matches;
+  const hasGsap = typeof gsap !== "undefined" && typeof ScrollTrigger !== "undefined";
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  /* ── DOM content ───────────────────────────────── */
+  const ICONS = {
+    duelist: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><circle cx="16" cy="16" r="9"/><path d="M16 2v8M16 22v8M2 16h8M22 16h8"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>',
+    initiator: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="16" r="2.5" fill="currentColor"/><path d="M14 9a10 10 0 0 1 0 14M19 5a16 16 0 0 1 0 22M24 2a21 21 0 0 1 0 28"/></svg>',
+    controller: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="18" r="7"/><circle cx="20" cy="13" r="7"/><circle cx="20" cy="22" r="5"/></svg>',
+    sentinel: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3l11 4v8c0 7-5 12-11 14C10 27 5 22 5 15V7z"/><path d="M11 16l4 4 7-8"/></svg>',
+    flex: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 2l14 14-14 14L2 16z"/><path d="M16 9l7 7-7 7-7-7z"/></svg>',
+  };
+  const SOCIAL_ICONS = {
+    Discord: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 5.4A18 18 0 0 0 15.6 4l-.5 1a16 16 0 0 0-6.2 0L8.4 4A18 18 0 0 0 4 5.4C1.3 9.5.5 13.4.9 17.3A18 18 0 0 0 6.3 20l1.1-1.8a11 11 0 0 1-1.7-.8l.4-.3a12.8 12.8 0 0 0 11.8 0l.4.3-1.7.8 1.1 1.8a18 18 0 0 0 5.4-2.7c.5-4.5-.8-8.4-3.1-11.9zM8.7 15c-1 0-1.9-1-1.9-2.2s.8-2.2 1.9-2.2 1.9 1 1.9 2.2-.8 2.2-1.9 2.2zm6.6 0c-1 0-1.9-1-1.9-2.2s.8-2.2 1.9-2.2 1.9 1 1.9 2.2-.8 2.2-1.9 2.2z"/></svg>',
+    TikTok: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 2c.3 2.3 1.7 3.9 4 4.1v3.1a7 7 0 0 1-4-1.3v6.5a6.3 6.3 0 1 1-6.3-6.3h.7v3.2a3.2 3.2 0 1 0 2.4 3.1V2z"/></svg>',
+    Twitch: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 2 2.5 6v14h5v3h3l3-3h4l5-5V2zm16 12-3 3h-4.5l-3 3v-3H6V4h14zM16 7h2v6h-2zm-5 0h2v6h-2z"/></svg>',
+    X: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.8 2h3.4l-7.4 8.5L22.5 22h-6.8l-5.3-7-6.1 7H.9l7.9-9.1L.5 2h7l4.8 6.4zm-1.2 18h1.9L7.1 3.9H5.1z"/></svg>',
+    YouTube: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12a31 31 0 0 0 .5 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8zM9.7 15.1V8.9l5.8 3.1z"/></svg>',
+  };
+  $("#cards").innerHTML = CONFIG.roster.map((p) => `
+    <article class="card" tabindex="0" data-tilt>
+      <div class="card__in">
+        <img class="card__emblem" src="assets/logo-512.png" alt="" aria-hidden="true">
+        <span class="card__icon" aria-hidden="true">${ICONS[p.icon] || ICONS.flex}</span>
+        <span class="card__lock">LOCKED</span>
+        <p class="card__role">${p.role}</p>
+        <h3 class="card__name">${p.name}</h3>
+        <p class="card__meta">Blue Hope · Line-up 2026</p>
+        <span class="card__shine" aria-hidden="true"></span><span class="card__flash" aria-hidden="true"></span>
+      </div>
+    </article>`).join("");
+  $("#socials").innerHTML = Object.entries(CONFIG.links).map(([k, href]) =>
+    `<li><a href="${href}" target="_blank" rel="noopener">${SOCIAL_ICONS[k] || ""}${k}</a></li>`).join("");
+
+  // split helpers
+  $$("[data-chars]").forEach((el) => { el.innerHTML = [...el.textContent].map((c) => `<span class="ch">${c}</span>`).join(""); });
+  $$("[data-words]").forEach((el) => { el.innerHTML = el.textContent.split(" ").map((w) => `<span class="w">${w}</span>`).join(" "); });
+  const MARQUEE = ["One tap", "Clutch 1v2", "Blue Hope", "Valorant", "Oui ! Oui !", "Saison 2026"];
+  $$("[data-marquee]").forEach((el) => {
+    const run = MARQUEE.map((w) => `<span>${w}</span>`).join("");
+    el.innerHTML = run + run + run + run;
+  });
+
+  /* ── WebGL stage ───────────────────────────────── */
+  const stage = createStage();
+  if (!stage) document.documentElement.classList.add("no-gl");
+
+  function createStage() {
+    if (typeof THREE === "undefined") return null;
+    const canvas = $("#gl");
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance" });
+    } catch (e) { return null; }
+    const narrow = () => innerWidth < 760;
+    const DPR = () => Math.min(devicePixelRatio || 1, narrow() ? 1.5 : 1.75);
+    renderer.setPixelRatio(DPR());
+    renderer.setSize(innerWidth, innerHeight, false);
+    const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
+    const NIGHT = lin("#030a16");
+    renderer.setClearColor(NIGHT, 1);
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(NIGHT, 0.045);
+    const camera = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 6.2);
+
+    // environment for glossy reflections: a dark dome with two softboxes
+    const env = new THREE.Scene();
+    env.add(new THREE.Mesh(new THREE.SphereGeometry(10, 48, 24), new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      vertexShader: "varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }",
+      fragmentShader: `varying vec3 vP;
+        void main(){
+          float h = vP.y * .5 + .5;
+          vec3 c = mix(vec3(.004,.012,.03), vec3(.02,.12,.32), smoothstep(.35, 1., h));
+          c += vec3(.75,.9,1.) * pow(max(0., dot(vP, normalize(vec3(-.6,.55,.6)))), 28.) * 4.;
+          c += vec3(.05,.45,1.) * pow(max(0., dot(vP, normalize(vec3(.9,.15,-.3)))), 10.) * 2.;
+          c += vec3(.1,.6,1.) * pow(max(0., dot(vP, normalize(vec3(-.2,-.9,.3)))), 6.) * 1.2;
+          gl_FragColor = vec4(c, 1.);
+        }`,
+    })));
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(env, 0.02).texture;
+
+    // lights
+    const key = new THREE.DirectionalLight(lin("#e4f4ff"), .85); key.position.set(-2.5, 3, 4); scene.add(key);
+    const rimA = new THREE.PointLight(lin("#1e90ff"), 9, 12); rimA.position.set(2.6, 1.2, -2); scene.add(rimA);
+    const rimB = new THREE.PointLight(lin("#38c6ff"), 6, 12); rimB.position.set(-2.8, -1.4, -1.6); scene.add(rimB);
+    const mouseLight = new THREE.PointLight(lin("#9fe0ff"), 2.5, 8); mouseLight.position.set(0, 0, 2.6); scene.add(mouseLight);
+
+    // ── the eagle: one extruded slab per colour layer, stacked like the logo's shading
+    const data = JSON.parse($("#logo-data").textContent);
+    const rig = new THREE.Group();          // driven by scroll poses
+    const logo = new THREE.Group();         // idle float + mouse tilt
+    rig.add(logo); scene.add(rig);
+    const toShape = (s) => {
+      const sh = new THREE.Shape(); const o = s.o;
+      sh.moveTo(o[0], o[1]); for (let i = 2; i < o.length; i += 2) sh.lineTo(o[i], o[i + 1]);
+      s.h.forEach((h) => { const p = new THREE.Path(); p.moveTo(h[0], h[1]); for (let i = 2; i < h.length; i += 2) p.lineTo(h[i], h[i + 1]); sh.holes.push(p); });
+      return sh;
+    };
+    const LAYOUT = [ // depth, base z, roughness, metalness, emissive
+      { d: .17, z: -.17, r: .3, m: .85, e: 0 },
+      { d: .032, z: 0, r: .34, m: .3, e: .01 },
+      { d: .032, z: .03, r: .32, m: .3, e: .01 },
+      { d: .032, z: .06, r: .3, m: .3, e: .02 },
+      { d: .04, z: .09, r: .24, m: .2, e: .06 },
+      { d: .012, z: .13, r: .2, m: 0, e: 1.6 },
+    ];
+    const layers = data.layers.map((L, i) => {
+      const cfg = LAYOUT[i] || LAYOUT[LAYOUT.length - 1];
+      const geo = new THREE.ExtrudeGeometry(L.s.map(toShape), {
+        depth: cfg.d, bevelEnabled: true, bevelThickness: i === 0 ? .018 : .007, bevelSize: i === 0 ? .01 : .004, bevelSegments: 3, curveSegments: 4,
+      });
+      const col = lin(L.c);
+      const mat = new THREE.MeshPhysicalMaterial({
+        color: col, metalness: cfg.m, roughness: cfg.r, clearcoat: 1, clearcoatRoughness: .14,
+        emissive: col, emissiveIntensity: cfg.e, envMapIntensity: .9,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.z = cfg.z; mesh.userData.z = cfg.z; mesh.userData.i = i;
+      logo.add(mesh);
+      return mesh;
+    });
+    // neon rim around the silhouette (front and back)
+    const outline = data.layers[0].s[0].o;
+    const rimPts = [];
+    for (let i = 0; i < outline.length; i += 2) rimPts.push(new THREE.Vector3(outline[i] * 1.012, outline[i + 1] * 1.012, 0));
+    const rimGeo = new THREE.BufferGeometry().setFromPoints(rimPts);
+    const rimMat = new THREE.LineBasicMaterial({ color: lin("#7fd6ff"), transparent: true, opacity: .7, blending: THREE.AdditiveBlending, depthWrite: false });
+    const rimFront = new THREE.LineLoop(rimGeo, rimMat); rimFront.position.z = .02; logo.add(rimFront);
+    const rimBack = new THREE.LineLoop(rimGeo, rimMat.clone()); rimBack.position.z = -.2; rimBack.material.opacity = .45; logo.add(rimBack);
+
+    // halo behind the eagle
+    const halo = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      uniforms: { uI: { value: 1 }, uC: { value: lin("#0a7ee8") } },
+      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }",
+      fragmentShader: "uniform float uI; uniform vec3 uC; varying vec2 vUv; void main(){ float r = length(vUv - .5) * 2.; float a = pow(max(0., 1. - r), 2.6) * .32 * uI; gl_FragColor = vec4(uC * a, a); }",
+    }));
+    scene.add(halo);
+
+    // HUD rings orbiting the eagle
+    const rings = new THREE.Group(); rig.add(rings);
+    const ringMat = (c, o) => new THREE.MeshBasicMaterial({ color: lin(c), transparent: true, opacity: o, blending: THREE.AdditiveBlending, depthWrite: false });
+    const ring1 = new THREE.Mesh(new THREE.TorusGeometry(1.62, .0045, 6, 256), ringMat("#5cc8ff", .6));
+    const ring2 = new THREE.Mesh(new THREE.TorusGeometry(1.9, .003, 6, 256), ringMat("#1f8fff", .55));
+    const dashPts = [];
+    for (let i = 0; i < 96; i++) {
+      const a0 = (i / 96) * Math.PI * 2, a1 = a0 + (Math.PI * 2 / 96) * .45;
+      dashPts.push(new THREE.Vector3(Math.cos(a0) * 2.15, Math.sin(a0) * 2.15, 0), new THREE.Vector3(Math.cos(a1) * 2.15, Math.sin(a1) * 2.15, 0));
+    }
+    const dashes = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(dashPts), new THREE.LineBasicMaterial({ color: lin("#a9e1ff"), transparent: true, opacity: .45, blending: THREE.AdditiveBlending, depthWrite: false }));
+    rings.add(ring1, ring2, dashes);
+
+    // star dust
+    const N = narrow() ? 1400 : 2600;
+    const pos = new Float32Array(N * 3), size = new Float32Array(N), seed = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      const r = 2.5 + Math.pow(Math.random(), .7) * 13, a = Math.random() * Math.PI * 2;
+      pos[i * 3] = Math.cos(a) * r; pos[i * 3 + 1] = (Math.random() - .5) * 26; pos[i * 3 + 2] = Math.sin(a) * r - 4;
+      size[i] = .6 + Math.random() * 2.2; seed[i] = Math.random();
+    }
+    const dustGeo = new THREE.BufferGeometry();
+    dustGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    dustGeo.setAttribute("aSize", new THREE.BufferAttribute(size, 1));
+    dustGeo.setAttribute("aSeed", new THREE.BufferAttribute(seed, 1));
+    const dustMat = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      uniforms: { uTime: { value: 0 }, uPR: { value: DPR() }, uC: { value: lin("#8fd8ff") }, uWarp: { value: 0 } },
+      vertexShader: `attribute float aSize; attribute float aSeed; uniform float uTime; uniform float uPR; uniform float uWarp; varying float vA;
+        void main(){
+          vec3 p = position; p.y += sin(uTime * .25 + aSeed * 6.283) * .35;
+          vec4 mv = modelViewMatrix * vec4(p, 1.);
+          gl_Position = projectionMatrix * mv;
+          gl_PointSize = aSize * uPR * (26. / -mv.z) * (1. + uWarp);
+          vA = .35 + .65 * (.5 + .5 * sin(uTime * 1.6 + aSeed * 50.));
+        }`,
+      fragmentShader: `uniform vec3 uC; varying float vA;
+        void main(){ float d = length(gl_PointCoord - .5); float a = smoothstep(.5, 0., d) * vA; gl_FragColor = vec4(uC * a, a); }`,
+    });
+    const dust = new THREE.Points(dustGeo, dustMat); scene.add(dust);
+
+    // post: bloom + a cinematic finishing pass (ACES, sRGB, aberration, vignette, grain)
+    const rt = new THREE.WebGLRenderTarget(innerWidth * DPR(), innerHeight * DPR(), { type: THREE.HalfFloatType, samples: renderer.capabilities.isWebGL2 ? 4 : 0 });
+    const composer = new THREE.EffectComposer(renderer, rt);
+    composer.setPixelRatio(DPR()); composer.setSize(innerWidth, innerHeight);
+    composer.addPass(new THREE.RenderPass(scene, camera));
+    const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .6, .55, .86);
+    composer.addPass(bloom);
+    const finish = new THREE.ShaderPass({
+      uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uAb: { value: .006 }, uExp: { value: .95 }, uRes: { value: new THREE.Vector2(innerWidth, innerHeight) } },
+      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }",
+      fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime; uniform float uAb; uniform float uExp; uniform vec2 uRes; varying vec2 vUv;
+        vec3 aces(vec3 x){ return clamp((x * (2.51 * x + .03)) / (x * (2.43 * x + .59) + .14), 0., 1.); }
+        vec3 srgb(vec3 c){ return mix(c * 12.92, 1.055 * pow(c, vec3(1. / 2.4)) - .055, step(.0031308, c)); }
+        float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+        void main(){
+          vec2 d = vUv - .5; float r = dot(d, d);
+          vec2 o = d * uAb * (1. + r * 4.);
+          vec3 c = vec3(texture2D(tDiffuse, vUv + o).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv - o).b);
+          c = srgb(aces(c * uExp));
+          c *= 1. - r * .75;
+          c += (h(vUv * uRes + fract(uTime) * 91.) - .5) * .03;
+          gl_FragColor = vec4(c, 1.);
+        }`,
+    });
+    composer.addPass(finish);
+
+    // ── state the page drives
+    const state = {
+      pose: { x: 0, y: .08, z: 0, rx: 0, ry: 0, rz: 0, s: 1.12, ex: .12, glow: 1, ring: 1, spin: 0 },
+      cur: null, intro: reduce ? 1 : 0, mouse: { x: 0, y: 0, sx: 0, sy: 0 }, vel: 0,
+    };
+    state.cur = { ...state.pose };
+    addEventListener("pointermove", (e) => { state.mouse.x = e.clientX / innerWidth * 2 - 1; state.mouse.y = -(e.clientY / innerHeight * 2 - 1); }, { passive: true });
+
+    function resize() {
+      const w = innerWidth, h = innerHeight;
+      renderer.setPixelRatio(DPR()); renderer.setSize(w, h, false);
+      composer.setPixelRatio(DPR()); composer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.position.z = w / h < .8 ? 8.4 : 6.2;   // portrait screens: step back so the wings fit
+      camera.updateProjectionMatrix();
+      finish.uniforms.uRes.value.set(w, h); dustMat.uniforms.uPR.value = DPR();
+    }
+    addEventListener("resize", resize);
+    resize();
+
+    const clock = new THREE.Clock();
+    let t = 0;
+    function frame() {
+      const dt = Math.min(clock.getDelta(), .05); t += dt;
+      const c = state.cur, p = state.pose, k = 1 - Math.exp(-dt * (reduce ? 50 : 5));
+      for (const key in p) c[key] = lerp(c[key], p[key], k);
+      const m = state.mouse; m.sx = lerp(m.sx, m.x, 1 - Math.exp(-dt * 4)); m.sy = lerp(m.sy, m.y, 1 - Math.exp(-dt * 4));
+      const intro = state.intro, inv = 1 - intro;
+      const float = reduce ? 0 : 1;
+
+      rig.position.set(c.x, c.y + Math.sin(t * .8) * .05 * float, c.z - inv * 6);
+      rig.rotation.set(c.rx, c.ry + c.spin - inv * 2.6, c.rz);
+      rig.scale.setScalar(c.s * (.35 + .65 * intro));
+      logo.rotation.x = -m.sy * .18 + Math.sin(t * .6) * .03 * float + clamp(state.vel * .0012, -.25, .25);
+      logo.rotation.y = m.sx * .32 + Math.sin(t * .45) * .05 * float;
+      const ex = c.ex + inv * 2.4;
+      layers.forEach((L) => { L.position.z = L.userData.z + ex * L.userData.i * .2; });
+      rimFront.position.z = .02 + ex * .05;
+
+      rings.rotation.set(Math.sin(t * .3) * .25 + .2, t * .12 * float, 0);
+      ring1.rotation.set(1.15, t * .35 * float, 0); ring2.rotation.set(-1.0, -t * .22 * float, .4);
+      dashes.rotation.z = t * .08 * float;
+      [ring1.material, ring2.material, dashes.material].forEach((mm, i) => { mm.opacity = [.75, .55, .45][i] * c.ring * intro; });
+      halo.material.uniforms.uI.value = c.glow * intro;
+      halo.position.set(rig.position.x, rig.position.y, rig.position.z - .9); halo.scale.setScalar(rig.scale.x);
+      state.vel *= Math.exp(-dt * 3);
+
+      mouseLight.position.set(m.sx * 3, m.sy * 2, 2.6);
+      dust.rotation.y = t * .015 * float + c.spin * .15;
+      dust.position.y = (scrollY || 0) * .0016;
+      dustMat.uniforms.uTime.value = t; dustMat.uniforms.uWarp.value = clamp(Math.abs(state.vel) * .004, 0, 1.5);
+      bloom.strength = .3 + .4 * c.glow;
+      finish.uniforms.uTime.value = t; finish.uniforms.uAb.value = .004 + clamp(Math.abs(state.vel) * .00008, 0, .012);
+      composer.render(dt);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+    return state;
+  }
+
+  /* ── scroll + motion ───────────────────────────── */
+  let lenis = null;
+  if (hasGsap) {
+    gsap.registerPlugin(ScrollTrigger);
+    if (!reduce && typeof Lenis !== "undefined") {
+      lenis = new Lenis({ lerp: .085, smoothWheel: true });
+      lenis.on("scroll", (e) => { ScrollTrigger.update(); if (stage) stage.vel = e.velocity; });
+      gsap.ticker.add((time) => lenis.raf(time * 1000));
+      gsap.ticker.lagSmoothing(0);
+      window.__lenis = lenis;
+    }
+  }
+  if (stage && !lenis) {
+    let last = scrollY;
+    addEventListener("scroll", () => { stage.vel = scrollY - last; last = scrollY; }, { passive: true });
+  }
+  const scrollToEl = (target) => {
+    const el = typeof target === "string" ? $(target) : target;
+    if (!el) return;
+    if (lenis) lenis.scrollTo(el, { duration: 1.6, easing: (x) => 1 - Math.pow(1 - x, 4) });
+    else el.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+  };
+  $$('a[href^="#"]').forEach((a) => a.addEventListener("click", (e) => {
+    const id = a.getAttribute("href");
+    if (id.length > 1 && $(id)) { e.preventDefault(); closeMenu(); scrollToEl(id); }
+  }));
+  $("#toTop").addEventListener("click", () => scrollToEl("#top"));
+
+  // nav state, mobile menu
+  const nav = $("#nav"), menuBtn = $("#menuBtn"), menu = $("#mobileMenu");
+  addEventListener("scroll", () => nav.classList.toggle("is-scrolled", scrollY > 40), { passive: true });
+  function closeMenu() { menu.classList.remove("is-open"); menu.setAttribute("aria-hidden", "true"); menuBtn.setAttribute("aria-expanded", "false"); menuBtn.textContent = "Menu"; }
+  menuBtn.addEventListener("click", () => {
+    const open = !menu.classList.contains("is-open");
+    menu.classList.toggle("is-open", open); menu.setAttribute("aria-hidden", String(!open));
+    menuBtn.setAttribute("aria-expanded", String(open)); menuBtn.textContent = open ? "Fermer" : "Menu";
+  });
+
+  // marquee: speed follows scroll velocity, direction follows scroll direction
+  const tracks = $$("[data-marquee]").map((el) => ({ el, dir: +el.dataset.marquee, x: 0 }));
+  let mDir = 1;
+  function marquee(dt) {
+    const v = stage ? stage.vel : 0;
+    if (Math.abs(v) > .5) mDir = v > 0 ? 1 : -1;
+    tracks.forEach((tr) => {
+      const w = tr.el.scrollWidth / 4;
+      tr.x -= (60 + Math.min(Math.abs(v) * 4, 900)) * dt * tr.dir * mDir;
+      if (tr.x < -w) tr.x += w; if (tr.x > 0) tr.x -= w;
+      tr.el.style.transform = `translate3d(${tr.x}px,0,0)`;
+    });
+  }
+  if (!reduce) {
+    let lt = performance.now();
+    const loop = (now) => { const dt = Math.min((now - lt) / 1000, .05); lt = now; marquee(dt); cursorTick(); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  }
+
+  // custom cursor + magnetic buttons
+  const cur = $(".cursor"), dot = $(".cursor-dot");
+  const cpos = { x: -100, y: -100, rx: -100, ry: -100 };
+  function cursorTick() {
+    if (!finePointer) return;
+    cpos.rx = lerp(cpos.rx, cpos.x, .2); cpos.ry = lerp(cpos.ry, cpos.y, .2);
+    cur.style.transform = `translate3d(${cpos.rx}px,${cpos.ry}px,0)`;
+    dot.style.transform = `translate3d(${cpos.x}px,${cpos.y}px,0)`;
+  }
+  if (finePointer && !reduce) {
+    document.body.classList.add("has-cursor");
+    addEventListener("pointermove", (e) => { cpos.x = e.clientX; cpos.y = e.clientY; }, { passive: true });
+    $$("a, button, .card, .moment, input, select, textarea").forEach((el) => {
+      el.addEventListener("pointerenter", () => cur.classList.add("is-hover"));
+      el.addEventListener("pointerleave", () => cur.classList.remove("is-hover"));
+    });
+    $$("[data-magnetic]").forEach((el) => {
+      el.addEventListener("pointermove", (e) => {
+        const r = el.getBoundingClientRect();
+        el.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * .25}px, ${(e.clientY - r.top - r.height / 2) * .35}px)`;
+      });
+      el.addEventListener("pointerleave", () => { el.style.transform = ""; });
+    });
+  }
+
+  // text scramble on nav links
+  const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#/_";
+  $$("[data-scramble]").forEach((el) => {
+    const final = el.textContent; let raf = 0;
+    el.addEventListener("pointerenter", () => {
+      if (reduce) return;
+      cancelAnimationFrame(raf); const start = performance.now();
+      const step = (now) => {
+        const p = Math.min((now - start) / 420, 1), n = Math.floor(p * final.length);
+        el.textContent = final.slice(0, n) + [...final.slice(n)].map((ch) => ch === " " ? " " : GLYPHS[(Math.random() * GLYPHS.length) | 0]).join("");
+        if (p < 1) raf = requestAnimationFrame(step); else el.textContent = final;
+      };
+      raf = requestAnimationFrame(step);
+    });
+  });
+
+  // 3D tilt (roster cards, phone)
+  $$("[data-tilt]").forEach((el) => {
+    const inner = el.querySelector(".card__in, .phone__body");
+    if (!inner || !finePointer || reduce) return;
+    el.addEventListener("pointermove", (e) => {
+      const r = el.getBoundingClientRect(), px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+      const amt = inner.classList.contains("phone__body") ? 10 : 16;
+      inner.style.setProperty("--rx", `${(.5 - py) * amt}deg`); inner.style.setProperty("--ry", `${(px - .5) * amt}deg`);
+      inner.style.setProperty("--mx", `${px * 100}%`); inner.style.setProperty("--my", `${py * 100}%`);
+      inner.style.setProperty("--gx", `${px * 100}%`); inner.style.setProperty("--gy", `${py * 100}%`);
+    });
+    el.addEventListener("pointerleave", () => { inner.style.setProperty("--rx", "0deg"); inner.style.setProperty("--ry", "0deg"); });
+    el.addEventListener("pointerenter", () => {
+      const fl = el.querySelector(".card__flash");
+      if (fl && hasGsap) gsap.fromTo(fl, { opacity: .55 }, { opacity: 0, duration: .5, ease: "power2.out" });
+    });
+  });
+
+  // highlights player: moments seek the video, progress bars follow playback
+  const video = $("#hlVideo"), moments = $$(".moment"), soundBtn = $("#soundBtn");
+  moments.forEach((b) => b.addEventListener("click", () => { video.currentTime = +b.dataset.t; video.play().catch(() => {}); }));
+  soundBtn.addEventListener("click", () => {
+    video.muted = !video.muted; soundBtn.textContent = video.muted ? "Activer le son" : "Couper le son";
+    if (video.paused) video.play().catch(() => {});
+  });
+  video.addEventListener("timeupdate", () => {
+    const tt = video.currentTime;
+    moments.forEach((b) => {
+      const a = +b.dataset.t, z = +b.dataset.end, on = tt >= a && tt < z;
+      b.classList.toggle("is-active", on);
+      b.querySelector(".moment__prog").style.transform = `scaleX(${on ? (tt - a) / (z - a) : 0})`;
+    });
+  });
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(([en]) => { if (en.isIntersecting) video.play().catch(() => {}); else video.pause(); }, { threshold: .35 }).observe(video);
+  }
+
+  // join form: build the application and copy it
+  const form = $("#joinForm"), ok = $("#formOk"), note = $("#formNote");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const riot = (fd.get("riot") || "").trim(), discord = (fd.get("discord") || "").trim();
+    if (!riot || !discord) {
+      ok.hidden = false; ok.innerHTML = "<strong>Il manque une info</strong><span>Renseigne ton Riot ID et ton pseudo Discord pour qu'on puisse te recontacter.</span>";
+      (riot ? $("#f-discord") : $("#f-riot")).focus(); return;
+    }
+    const text = `Candidature Blue Hope\nRiot ID : ${riot}\nDiscord : ${discord}\nRang : ${fd.get("rank")}\nRôle : ${fd.get("role")}\n\n${(fd.get("msg") || "").trim()}`;
+    let copied = false;
+    try { await navigator.clipboard.writeText(text); copied = true; } catch (err) { copied = false; }
+    ok.hidden = false;
+    ok.innerHTML = `<strong>${copied ? "Candidature copiée" : "Candidature prête"}</strong>
+      <span>${copied ? "Colle-la dans le salon recrutement de notre Discord." : "Copie le texte ci-dessous et colle-le dans le salon recrutement de notre Discord."}</span>
+      <textarea readonly aria-label="Texte de la candidature"></textarea>
+      ${CONFIG.links.Discord && CONFIG.links.Discord !== "#" ? `<a class="btn" href="${CONFIG.links.Discord}" target="_blank" rel="noopener">Ouvrir le Discord</a>` : ""}`;
+    const ta = ok.querySelector("textarea"); ta.value = text;
+    if (!copied) { ta.focus(); ta.select(); }
+    note.hidden = true;
+  });
+
+  /* ── choreography ──────────────────────────────── */
+  if (!hasGsap) { if (stage) stage.intro = 1; $("#loader").remove(); return; }
+
+  // eagle poses, per section; narrow screens keep it behind the text
+  const POSES = (narrow) => ({
+    hero:       { x: 0, y: narrow ? .55 : .08, z: 0, rx: 0, ry: 0, rz: 0, s: narrow ? 1 : 1.12, ex: .12, glow: 1, ring: 1, spin: 0 },
+    manifesto:  { x: narrow ? .2 : 2.05, y: narrow ? 1.1 : .05, z: narrow ? -3 : -.6, rx: .28, ry: -.95, rz: .12, s: .95, ex: 1.15, glow: .55, ring: .25, spin: 0 },
+    sig:        { x: 0, y: 0, z: -1.4, rx: .12, ry: 0, rz: 0, s: 1.05, ex: .45, glow: .85, ring: .8, spin: 0 },
+    highlights: { x: narrow ? 0 : 1.75, y: narrow ? 1.4 : .15, z: narrow ? -4 : -2.6, rx: -.1, ry: -.6, rz: .05, s: .9, ex: .35, glow: .55, ring: .5, spin: Math.PI * 2 },
+    roster:     { x: narrow ? 0 : -.3, y: narrow ? 1.9 : 1.6, z: -4.4, rx: -.5, ry: 0, rz: 0, s: .9, ex: .8, glow: .6, ring: .6, spin: Math.PI * 2 },
+    join:       { x: narrow ? 0 : .2, y: narrow ? 1.9 : 1.45, z: narrow ? -5 : -4.6, rx: .2, ry: .35, rz: 0, s: .85, ex: .2, glow: .5, ring: .4, spin: Math.PI * 2 },
+    footer:     { x: 0, y: narrow ? .9 : .55, z: narrow ? -.6 : 0, rx: 0, ry: 0, rz: 0, s: narrow ? .95 : 1.05, ex: 0, glow: 1.15, ring: 1, spin: Math.PI * 4 },
+  });
+
+  const mm = gsap.matchMedia();
+  mm.add({ narrow: "(max-width: 759px)", wide: "(min-width: 760px)" }, (ctx) => {
+    const P = POSES(ctx.conditions.narrow);
+    if (stage) Object.assign(stage.pose, P.hero);
+    const sections = $$("[data-pose]");
+    const order = sections.map((s) => s.dataset.pose);
+
+    // horizontal pinned track first (it adds pin spacing for everything below)
+    const sig = $("#jeu"), track = $(".sig__track");
+    const dist = () => track.scrollWidth - innerWidth;
+    gsap.to(track, { x: () => -dist(), ease: "none", scrollTrigger: { trigger: sig, start: "top top", end: () => "+=" + dist(), pin: true, scrub: reduce ? true : .8, invalidateOnRefresh: true } });
+    gsap.to("#sigBar", { scaleX: 1, ease: "none", scrollTrigger: { trigger: sig, start: "top top", end: () => "+=" + dist(), scrub: true, invalidateOnRefresh: true } });
+    $$(".panel__word").forEach((w) => {
+      gsap.fromTo(w, { yPercent: 12, skewX: -6 }, { yPercent: -12, skewX: 6, ease: "none", scrollTrigger: { trigger: sig, start: "top top", end: () => "+=" + dist(), scrub: true, invalidateOnRefresh: true } });
+    });
+
+    if (stage) {
+      for (let i = 1; i < order.length; i++) {
+        const from = order[i - 1] === "sig" ? { ...P.sig, spin: Math.PI * 2 } : P[order[i - 1]], to = P[order[i]], sec = sections[i];
+        gsap.fromTo(stage.pose, { ...from }, {
+          ...to, ease: "none", immediateRender: false,
+          scrollTrigger: { trigger: sec, start: "top bottom", end: order[i] === "footer" ? "bottom bottom" : "top 20%", scrub: true },
+        });
+      }
+      // a full turn of the eagle while the horizontal track scrolls
+      gsap.fromTo(stage.pose, { spin: 0 }, { spin: Math.PI * 2, ease: "none", immediateRender: false, scrollTrigger: { trigger: sig, start: "top top", end: () => "+=" + dist(), scrub: true, invalidateOnRefresh: true } });
+    }
+
+    // HUD
+    sections.forEach((sec, i) => {
+      ScrollTrigger.create({
+        trigger: sec, start: "top 55%", end: "bottom 55%",
+        onToggle: (st) => {
+          if (!st.isActive) return;
+          $("#hudNum").textContent = String(i + 1).padStart(2, "0"); $("#hudName").textContent = sec.dataset.name;
+          $$(".nav__links a").forEach((a) => a.classList.toggle("is-active", a.getAttribute("href") === "#" + sec.id));
+        },
+      });
+    });
+    gsap.to("#hudBar", { scaleY: 1, ease: "none", scrollTrigger: { trigger: document.body, start: "top top", end: "bottom bottom", scrub: true } });
+
+    // manifesto words light up as you read
+    gsap.fromTo(".manifesto__text .w", { color: "#4d6688" }, {
+      color: "#eef6ff", stagger: .08, ease: "none",
+      scrollTrigger: { trigger: ".manifesto__text", start: "top 78%", end: "bottom 42%", scrub: true },
+    });
+    if (reduce) return;
+    // section headings: lines rise out of their masks
+    $$(".h-section").forEach((h) => {
+      gsap.from(h.querySelectorAll(".split-line > span"), {
+        yPercent: 110, rotate: 4, duration: 1.1, stagger: .1, ease: "expo.out",
+        scrollTrigger: { trigger: h, start: "top 85%", toggleActions: "play none none reverse" },
+      });
+    });
+    gsap.from(".card", { y: 80, opacity: 0, rotateX: -25, duration: 1, stagger: .08, ease: "expo.out", scrollTrigger: { trigger: "#cards", start: "top 85%" } });
+    gsap.from(".phone__body", { y: 120, rotateX: 22, rotateZ: -6, opacity: 0, duration: 1.4, ease: "expo.out", scrollTrigger: { trigger: ".phone", start: "top 85%" } });
+    gsap.from(".moment", { x: -40, opacity: 0, duration: .9, stagger: .1, ease: "expo.out", scrollTrigger: { trigger: "#moments", start: "top 85%" } });
+    gsap.from(".footer__big span", { yPercent: 100, duration: 1.2, stagger: .12, ease: "expo.out", scrollTrigger: { trigger: ".footer", start: "top 80%" } });
+    gsap.to(".marquee--solid", { rotate: -5, ease: "none", scrollTrigger: { trigger: ".marquees", start: "top bottom", end: "bottom top", scrub: true } });
+  });
+
+  // loader -> intro sequence
+  const loader = $("#loader"), pct = $("#loadPct"), fill = $(".loader__logo .fill");
+  const counter = { v: 0 };
+  const fontsReady = document.fonts ? document.fonts.ready : Promise.resolve();
+  const intro = gsap.timeline({ paused: true });
+  intro
+    .to(loader, { clipPath: "inset(0 0 100% 0)", duration: 1, ease: "expo.inOut" })
+    .add(() => loader.remove())
+    .to(stage || {}, { intro: 1, duration: 2.4, ease: "expo.out" }, "-=.55")
+    .from(".hero__title .ch", { yPercent: 115, rotate: 8, duration: 1.2, stagger: .045, ease: "expo.out" }, "-=2.2")
+    .from(".hero__meta span", { y: 20, opacity: 0, duration: .8, stagger: .08, ease: "expo.out" }, "-=1.4")
+    .from(".hero__sub, .hero__ctas > *", { y: 30, opacity: 0, duration: .9, stagger: .08, ease: "expo.out" }, "-=1.1")
+    .from(".nav", { y: -40, opacity: 0, duration: .8, ease: "expo.out" }, "-=1")
+    .from(".hud-corner", { scale: 0, opacity: 0, duration: .6, stagger: .1 }, "-=.8");
+  if (reduce) {
+    intro.progress(1);
+  } else {
+    if (lenis) lenis.stop();
+    gsap.to(counter, {
+      v: 100, duration: 1.5, ease: "power2.inOut",
+      onUpdate: () => { pct.textContent = String(Math.round(counter.v)).padStart(3, "0"); fill.style.clipPath = `inset(${100 - counter.v}% 0 0 0)`; },
+      onComplete: () => fontsReady.then(() => { intro.play(); if (lenis) lenis.start(); ScrollTrigger.refresh(); }),
+    });
+  }
+})();
+</script>
+</body>
+</html>
