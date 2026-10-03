@@ -52,12 +52,6 @@ a { color: inherit; }
   display: block; position: fixed; z-index: 0; left: 50%; top: 50%; width: min(70vw, 560px);
   transform: translate(-50%, -50%); opacity: .55; filter: drop-shadow(0 0 60px rgba(6, 158, 246, .6));
 }
-.grain {
-  position: fixed; inset: -100px; z-index: 3; pointer-events: none; opacity: .055; mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  animation: grain .9s steps(5) infinite;
-}
-@keyframes grain { 0% { transform: translate(0, 0); } 20% { transform: translate(-40px, 20px); } 40% { transform: translate(30px, -30px); } 60% { transform: translate(-20px, -40px); } 80% { transform: translate(40px, 30px); } 100% { transform: translate(0, 0); } }
 main { position: relative; z-index: 1; }
 .wrap { width: min(1320px, 100%); margin-inline: auto; padding-inline: var(--gutter); }
 
@@ -80,9 +74,9 @@ main { position: relative; z-index: 1; }
   position: fixed; top: 0; left: 0; right: 0; z-index: 60;
   display: flex; align-items: center; justify-content: space-between; gap: 24px;
   padding: calc(env(safe-area-inset-top, 0px) + 18px) var(--gutter) 18px;
-  transition: background .4s, backdrop-filter .4s, padding .4s;
+  transition: background .4s, padding .4s;
 }
-.nav.is-scrolled { background: rgba(3, 10, 22, .55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding-block-end: 12px; }
+.nav.is-scrolled { background: rgba(3, 10, 22, .86); padding-block-end: 12px; }
 .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
 .brand img { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(6, 158, 246, .5)); }
 .brand span { font: 400 1.35rem/1 var(--f-display); letter-spacing: .06em; }
@@ -188,7 +182,7 @@ main { position: relative; z-index: 1; }
 }
 .panel__card {
   position: absolute; left: var(--gutter); bottom: 9vh; width: min(380px, calc(100% - 2 * var(--gutter)));
-  padding: 22px 24px; background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  padding: 22px 24px; background: rgba(7, 27, 54, .88);
   border: 1px solid var(--line); clip-path: var(--chamfer);
 }
 .panel:nth-child(even) .panel__card { left: auto; right: var(--gutter); }
@@ -270,7 +264,7 @@ main { position: relative; z-index: 1; }
 .socials svg { width: 16px; height: 16px; }
 .form {
   display: grid; gap: 18px; padding: clamp(22px, 3vw, 36px); background: var(--glass); border: 1px solid var(--line);
-  clip-path: var(--chamfer); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  clip-path: var(--chamfer); background: rgba(7, 27, 54, .9);
 }
 .form__row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .field { display: grid; gap: 8px; min-width: 0; }
@@ -327,7 +321,7 @@ main { position: relative; z-index: 1; }
   .panel__card, .panel:nth-child(even) .panel__card { left: var(--gutter); right: auto; bottom: 12vh; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .grain, .scroll-cue i { animation: none; }
+  .scroll-cue i { animation: none; }
   .btn::after { display: none; }
   * { transition-duration: .01ms !important; }
 }
@@ -338,7 +332,6 @@ main { position: relative; z-index: 1; }
 
 <canvas id="gl" aria-hidden="true"></canvas>
 <img class="fallback-logo" src="assets/logo-512.png" alt="" aria-hidden="true">
-<div class="grain" aria-hidden="true"></div>
 <div class="cursor" aria-hidden="true"></div><div class="cursor-dot" aria-hidden="true"></div>
 
 <div class="loader" id="loader" aria-hidden="true">
@@ -588,7 +581,8 @@ const CONFIG = {
       renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance" });
     } catch (e) { return null; }
     const narrow = () => innerWidth < 760;
-    const DPR = () => Math.min(devicePixelRatio || 1, narrow() ? 1.5 : 1.75);
+    let quality = 1;   // lowered automatically if frames get slow
+    const DPR = () => Math.min(devicePixelRatio || 1, narrow() ? 1.25 : 1.25) * quality;
     renderer.setPixelRatio(DPR());
     renderer.setSize(innerWidth, innerHeight, false);
     const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
@@ -602,7 +596,7 @@ const CONFIG = {
 
     // environment for glossy reflections: a dark dome with two softboxes
     const env = new THREE.Scene();
-    env.add(new THREE.Mesh(new THREE.SphereGeometry(10, 48, 24), new THREE.ShaderMaterial({
+    env.add(new THREE.Mesh(new THREE.SphereGeometry(10, 32, 16), new THREE.ShaderMaterial({
       side: THREE.BackSide,
       vertexShader: "varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }",
       fragmentShader: `varying vec3 vP;
@@ -621,8 +615,7 @@ const CONFIG = {
     // lights
     const key = new THREE.DirectionalLight(lin("#e4f4ff"), .85); key.position.set(-2.5, 3, 4); scene.add(key);
     const rimA = new THREE.PointLight(lin("#1e90ff"), 9, 12); rimA.position.set(2.6, 1.2, -2); scene.add(rimA);
-    const rimB = new THREE.PointLight(lin("#38c6ff"), 6, 12); rimB.position.set(-2.8, -1.4, -1.6); scene.add(rimB);
-    const mouseLight = new THREE.PointLight(lin("#9fe0ff"), 2.5, 8); mouseLight.position.set(0, 0, 2.6); scene.add(mouseLight);
+        const mouseLight = new THREE.PointLight(lin("#9fe0ff"), 2.5, 8); mouseLight.position.set(0, 0, 2.6); scene.add(mouseLight);
 
     // ── the eagle: one extruded slab per colour layer, stacked like the logo's shading
     const data = JSON.parse($("#logo-data").textContent);
@@ -646,11 +639,11 @@ const CONFIG = {
     const layers = data.layers.map((L, i) => {
       const cfg = LAYOUT[i] || LAYOUT[LAYOUT.length - 1];
       const geo = new THREE.ExtrudeGeometry(L.s.map(toShape), {
-        depth: cfg.d, bevelEnabled: true, bevelThickness: i === 0 ? .018 : .007, bevelSize: i === 0 ? .01 : .004, bevelSegments: 3, curveSegments: 4,
+        depth: cfg.d, bevelEnabled: true, bevelThickness: i === 0 ? .018 : .007, bevelSize: i === 0 ? .01 : .004, bevelSegments: 2, curveSegments: 4,
       });
       const col = lin(L.c);
-      const mat = new THREE.MeshPhysicalMaterial({
-        color: col, metalness: cfg.m, roughness: cfg.r, clearcoat: 1, clearcoatRoughness: .14,
+      const mat = new THREE.MeshStandardMaterial({
+        color: col, metalness: cfg.m, roughness: cfg.r * .8,
         emissive: col, emissiveIntensity: cfg.e, envMapIntensity: .9,
       });
       const mesh = new THREE.Mesh(geo, mat);
@@ -679,8 +672,8 @@ const CONFIG = {
     // HUD rings orbiting the eagle
     const rings = new THREE.Group(); rig.add(rings);
     const ringMat = (c, o) => new THREE.MeshBasicMaterial({ color: lin(c), transparent: true, opacity: o, blending: THREE.AdditiveBlending, depthWrite: false });
-    const ring1 = new THREE.Mesh(new THREE.TorusGeometry(1.62, .0045, 6, 256), ringMat("#5cc8ff", .6));
-    const ring2 = new THREE.Mesh(new THREE.TorusGeometry(1.9, .003, 6, 256), ringMat("#1f8fff", .55));
+    const ring1 = new THREE.Mesh(new THREE.TorusGeometry(1.62, .0045, 4, 160), ringMat("#5cc8ff", .6));
+    const ring2 = new THREE.Mesh(new THREE.TorusGeometry(1.9, .003, 4, 160), ringMat("#1f8fff", .55));
     const dashPts = [];
     for (let i = 0; i < 96; i++) {
       const a0 = (i / 96) * Math.PI * 2, a1 = a0 + (Math.PI * 2 / 96) * .45;
@@ -690,7 +683,7 @@ const CONFIG = {
     rings.add(ring1, ring2, dashes);
 
     // star dust
-    const N = narrow() ? 1400 : 2600;
+    const N = narrow() ? 900 : 1600;
     const pos = new Float32Array(N * 3), size = new Float32Array(N), seed = new Float32Array(N);
     for (let i = 0; i < N; i++) {
       const r = 2.5 + Math.pow(Math.random(), .7) * 13, a = Math.random() * Math.PI * 2;
@@ -718,11 +711,13 @@ const CONFIG = {
     const dust = new THREE.Points(dustGeo, dustMat); scene.add(dust);
 
     // post: bloom + a cinematic finishing pass (ACES, sRGB, aberration, vignette, grain)
-    const rt = new THREE.WebGLRenderTarget(innerWidth * DPR(), innerHeight * DPR(), { type: THREE.HalfFloatType, samples: renderer.capabilities.isWebGL2 ? 4 : 0 });
+    const rt = new THREE.WebGLRenderTarget(innerWidth * DPR(), innerHeight * DPR(), { type: THREE.HalfFloatType });
     const composer = new THREE.EffectComposer(renderer, rt);
     composer.setPixelRatio(DPR()); composer.setSize(innerWidth, innerHeight);
     composer.addPass(new THREE.RenderPass(scene, camera));
     const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .6, .55, .86);
+    const bloomSize = bloom.setSize.bind(bloom);
+    bloom.setSize = (w, h) => bloomSize(Math.max(1, w / 2), Math.max(1, h / 2));
     composer.addPass(bloom);
     const finish = new THREE.ShaderPass({
       uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uAb: { value: .006 }, uExp: { value: .95 }, uRes: { value: new THREE.Vector2(innerWidth, innerHeight) } },
@@ -766,6 +761,7 @@ const CONFIG = {
     const clock = new THREE.Clock();
     let t = 0;
     function frame() {
+      if (document.hidden) return;
       const dt = Math.min(clock.getDelta(), .05); t += dt;
       const c = state.cur, p = state.pose, k = 1 - Math.exp(-dt * (reduce ? 50 : 5));
       for (const key in p) c[key] = lerp(c[key], p[key], k);
@@ -796,10 +792,23 @@ const CONFIG = {
       dustMat.uniforms.uTime.value = t; dustMat.uniforms.uWarp.value = clamp(Math.abs(state.vel) * .004, 0, 1.5);
       bloom.strength = .3 + .4 * c.glow;
       finish.uniforms.uTime.value = t; finish.uniforms.uAb.value = .004 + clamp(Math.abs(state.vel) * .00008, 0, .012);
-      composer.render(dt);
-      requestAnimationFrame(frame);
+      bloom.enabled = state.bloomOn; composer.render(dt);
+      adapt(dt);
     }
-    requestAnimationFrame(frame);
+    // adaptive quality: if the average frame is slow, drop resolution, then bloom
+    let acc = 0, frames = 0, settle = 0;
+    function adapt(dt) {
+      acc += dt; frames++;
+      if (acc < 1) return;
+      const avg = acc / frames; acc = 0; frames = 0;
+      if (++settle < 3) return;                       // ignore the loading seconds
+      if (avg > 1 / 45 && quality > .5) { quality = Math.max(.5, quality - .15); resize(); }
+      else if (avg < 1 / 58 && quality < 1) { quality = Math.min(1, quality + .05); resize(); }
+      state.bloomOn = quality > .55;
+    }
+    state.bloomOn = true;
+    if (typeof gsap !== "undefined") gsap.ticker.add(frame);
+    else { const loop = () => { frame(); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
     return state;
   }
 
@@ -855,9 +864,8 @@ const CONFIG = {
     });
   }
   if (!reduce) {
-    let lt = performance.now();
-    const loop = (now) => { const dt = Math.min((now - lt) / 1000, .05); lt = now; marquee(dt); cursorTick(); requestAnimationFrame(loop); };
-    requestAnimationFrame(loop);
+    if (hasGsap) gsap.ticker.add((time, delta) => { marquee(Math.min(delta / 1000, .05)); cursorTick(); });
+    else { let lt = performance.now(); const loop = (now) => { const dt = Math.min((now - lt) / 1000, .05); lt = now; marquee(dt); cursorTick(); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
   }
 
   // custom cursor + magnetic buttons
