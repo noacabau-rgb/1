@@ -19,6 +19,12 @@ En haut du script principal de `index.html`, l'objet `CONFIG` :
 
 La vidéo des highlights est `assets/highlights.mp4` (l'edit Blue Hope en 720×1280).
 
+## Page Équipe (`equipe.html`)
+Section CEO (Atipik59, photo `assets/ceo-atipik59.jpg`, son setup avec liens Logitech G) puis les
+joueurs : chaque carte ouvre une fiche (agent, DPI, sensi, eDPI, écran, setup). Tout se modifie dans
+l'objet `TEAM` en haut du script. Les setups des joueurs sont des exemples à remplacer, et les 4 liens
+Logitech G courts du CEO sont affichés « Équipement Logitech G » tant que le nom du produit n'est pas renseigné.
+
 ## Comment c'est fait
 - **Logo 3D** : le logo PNG a été vectorisé couche par couche (silhouette + 4 bleus + œil,
   `assets/logo3d.json`, intégré dans la page) puis chaque couche est extrudée en 3D avec

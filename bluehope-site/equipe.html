@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blue Hope · Équipe</title>
+<meta name="description" content="Le staff et les joueurs Valorant de Blue Hope, avec leurs setups.">
+<meta name="theme-color" content="#030a16">
+<link rel="icon" type="image/png" href="assets/logo-128.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600&family=Chakra+Petch:wght@500;600;700&display=swap">
+<style>
+/* Same night-flight HUD as the home page: one light 2D star canvas, cards carry the 3D. */
+:root {
+  color-scheme: dark;
+  --night: #030a16;
+  --navy: #071b36;
+  --blue: #069ef6;
+  --ice: #a9e1ff;
+  --mist: #8299b9;
+  --white: #eef6ff;
+  --line: rgba(150, 205, 255, .2);
+  --panel: rgba(7, 27, 54, .9);
+  --f-display: "Anton", "Impact", "Arial Narrow Bold", sans-serif;
+  --f-ui: "Chakra Petch", "Rajdhani", "Segoe UI", sans-serif;
+  --f-body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --gutter: clamp(16px, 4vw, 56px);
+  --chamfer: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--night); -webkit-text-size-adjust: 100%; }
+html.lenis, html.lenis body { height: auto; }
+body { margin: 0; background: var(--night); color: var(--white); font: 400 1.0625rem/1.6 var(--f-body); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--ice); outline-offset: 3px; }
+::selection { background: var(--blue); color: var(--night); }
+
+#stars { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; }
+.bg-eagle { position: fixed; z-index: 0; left: 50%; top: 52%; width: min(120vw, 1300px); opacity: .07; transform: translate(-50%, -50%); pointer-events: none; will-change: transform; }
+.bg-glow { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(60% 50% at 50% 0%, rgba(6, 158, 246, .22), transparent 70%), radial-gradient(40% 40% at 90% 90%, rgba(6, 158, 246, .1), transparent 70%); }
+main { position: relative; z-index: 1; }
+.wrap { width: min(1320px, 100%); margin-inline: auto; padding-inline: var(--gutter); }
+
+/* nav */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 60; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: calc(env(safe-area-inset-top, 0px) + 18px) var(--gutter) 16px; transition: background .4s; }
+.nav.is-scrolled { background: rgba(3, 10, 22, .9); }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.brand img { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(6, 158, 246, .5)); }
+.brand span { font: 400 1.35rem/1 var(--f-display); letter-spacing: .06em; }
+.nav__links { display: flex; gap: clamp(14px, 2.4vw, 34px); list-style: none; margin: 0; padding: 0; }
+.nav__links a { font: 600 .78rem/1 var(--f-ui); letter-spacing: .18em; text-transform: uppercase; text-decoration: none; color: var(--mist); transition: color .25s; }
+.nav__links a:hover, .nav__links a[aria-current] { color: var(--white); }
+.nav__links a[aria-current]::before { content: "/ "; color: var(--blue); }
+
+/* type */
+.eyebrow { display: inline-flex; align-items: center; gap: 12px; margin: 0 0 18px; font: 600 .78rem/1 var(--f-ui); letter-spacing: .26em; text-transform: uppercase; color: var(--ice); }
+.eyebrow::before { content: ""; width: 28px; height: 1px; background: var(--blue); }
+.h-xl { margin: 0; font: 400 clamp(3.6rem, 13vw, 12rem)/.84 var(--f-display); text-transform: uppercase; }
+.h-xl .stroke, .h-sec .stroke { color: transparent; -webkit-text-stroke: 1.5px var(--ice); }
+.h-sec { margin: 0; font: 400 clamp(2.6rem, 7vw, 6rem)/.88 var(--f-display); text-transform: uppercase; }
+.lead { max-width: 52ch; color: var(--mist); font-size: clamp(1.02rem, 1.4vw, 1.15rem); }
+.mask { display: block; overflow: hidden; padding-block: .05em; margin-block: -.05em; }
+.mask > span { display: inline-block; }
+
+.hero { padding-block: calc(env(safe-area-inset-top, 0px) + 140px) 60px; }
+.hero__row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 24px 48px; }
+.counts { display: flex; gap: 10px; flex-wrap: wrap; }
+.count { padding: 14px 18px; border: 1px solid var(--line); background: rgba(7, 27, 54, .6); clip-path: var(--chamfer); }
+.count b { display: block; font: 400 2rem/1 var(--f-display); }
+.count span { font: 600 .68rem/1 var(--f-ui); letter-spacing: .22em; text-transform: uppercase; color: var(--mist); }
+
+.section { padding-block: 48px 96px; }
+.section__head { display: flex; justify-content: space-between; align-items: end; gap: 16px 40px; flex-wrap: wrap; margin-bottom: 36px; }
+.tag { display: inline-block; padding: 4px 8px; background: var(--blue); color: var(--night); font: 700 .66rem/1.2 var(--f-ui); letter-spacing: .16em; text-transform: uppercase; }
+
+/* CEO */
+.ceo { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); border: 1px solid var(--line); background: var(--panel); clip-path: polygon(24px 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%, 0 24px); }
+.ceo__photo { position: relative; overflow: hidden; aspect-ratio: 3 / 4; background: #0b1d36; }
+.ceo__photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; transform: scale(1.04); transition: transform 1.2s cubic-bezier(.2, .8, .2, 1); }
+.ceo:hover .ceo__photo img { transform: scale(1.09); }
+.ceo__photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(3, 10, 22, .85)), linear-gradient(90deg, transparent 70%, rgba(7, 27, 54, .9)); }
+.ceo__badge { position: absolute; left: 18px; bottom: 18px; z-index: 1; display: flex; gap: 8px; align-items: center; font: 600 .7rem/1 var(--f-ui); letter-spacing: .22em; color: var(--ice); }
+.ceo__badge img { width: 28px; }
+.ceo__body { padding: clamp(24px, 4vw, 48px); display: grid; align-content: start; gap: 18px; min-width: 0; }
+.ceo__name { margin: 0; font: 400 clamp(3rem, 7vw, 6rem)/.86 var(--f-display); word-break: break-word; }
+.ceo__role { font: 600 .8rem/1 var(--f-ui); letter-spacing: .24em; text-transform: uppercase; color: var(--blue); }
+.ceo__text { margin: 0; color: var(--mist); max-width: 52ch; }
+
+/* setup list */
+.setup-title { margin: 8px 0 0; font: 600 .74rem/1 var(--f-ui); letter-spacing: .24em; text-transform: uppercase; color: var(--ice); }
+.setup { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 10px; }
+.gear { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 2px 14px; align-items: center; padding: 14px 16px; text-decoration: none; border: 1px solid var(--line); background: rgba(3, 10, 22, .5); clip-path: var(--chamfer); transition: background .3s, border-color .3s, transform .3s; }
+a.gear:hover { background: rgba(6, 158, 246, .14); border-color: rgba(6, 158, 246, .6); transform: translateY(-2px); }
+.gear svg { grid-row: span 2; width: 34px; height: 34px; color: var(--ice); }
+.gear__cat { font: 600 .66rem/1.2 var(--f-ui); letter-spacing: .2em; text-transform: uppercase; color: var(--mist); }
+.gear__name { font: 600 1rem/1.25 var(--f-body); color: var(--white); }
+a.gear .gear__cat::after { content: " ↗"; color: var(--blue); }
+
+/* players */
+.players { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(10px, 1.4vw, 20px); }
+.pcard { perspective: 900px; background: none; border: 0; padding: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.pcard__in {
+  --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 50%;
+  position: relative; overflow: hidden; aspect-ratio: 3 / 4.5; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; padding: 18px;
+  background: radial-gradient(120% 80% at 50% 0%, #10345e, #061226 62%); border: 1px solid var(--line); clip-path: var(--chamfer);
+  transform: rotateX(var(--rx)) rotateY(var(--ry)); transition: transform .2s ease-out, border-color .3s;
+}
+.pcard:hover .pcard__in, .pcard:focus-visible .pcard__in { border-color: rgba(6, 158, 246, .8); }
+.pcard__emblem { position: absolute; left: 50%; top: 40%; width: 150%; transform: translate(-50%, -50%); opacity: .13; }
+.pcard__agent { position: absolute; left: 50%; bottom: 0; height: 112%; width: auto; max-width: none; transform: translateX(-50%); filter: drop-shadow(0 0 30px rgba(6, 158, 246, .35)); transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
+.pcard:hover .pcard__agent { transform: translateX(-50%) scale(1.06); }
+.pcard__fade { position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, rgba(3, 10, 22, .96) 70%); }
+.pcard__agentname { position: absolute; top: 18px; right: 16px; font: 600 .62rem/1 var(--f-ui); letter-spacing: .22em; color: var(--mist); text-transform: uppercase; }
+.pcard__role { position: relative; margin: 0; font: 600 .7rem/1 var(--f-ui); letter-spacing: .22em; text-transform: uppercase; color: var(--blue); }
+.pcard__name { position: relative; margin: 0; font: 400 clamp(1.25rem, 1.75vw, 1.9rem)/.95 var(--f-display); word-break: break-word; }
+.pcard__more { position: relative; font: 600 .66rem/1 var(--f-ui); letter-spacing: .2em; text-transform: uppercase; color: var(--ice); opacity: .7; transition: opacity .3s; }
+.pcard:hover .pcard__more { opacity: 1; }
+.pcard__shine { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s; mix-blend-mode: color-dodge; background: radial-gradient(circle at var(--mx) var(--my), rgba(169, 225, 255, .45), transparent 42%); }
+.pcard:hover .pcard__shine { opacity: 1; }
+
+/* player sheet (dialog) */
+.sheet { position: fixed; inset: 0; margin: auto; z-index: 100; height: fit-content; width: min(980px, calc(100% - 2 * var(--gutter))); max-height: calc(100dvh - 48px); padding: 0; border: 1px solid rgba(6, 158, 246, .5); background: #061428; color: var(--white); clip-path: polygon(24px 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%, 0 24px); overflow: auto; }
+.sheet-veil { position: fixed; inset: 0; z-index: 90; background: rgba(2, 6, 14, .84); }
+.sheet__grid { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); }
+.sheet__art { position: relative; min-height: 420px; overflow: hidden; background: radial-gradient(120% 80% at 50% 10%, #12406f, #061226 70%); }
+.sheet__art img.agent { position: absolute; left: 50%; bottom: 0; height: 108%; width: auto; max-width: none; transform: translateX(-50%); }
+.sheet__art img.emblem { position: absolute; left: 50%; top: 45%; width: 160%; transform: translate(-50%, -50%); opacity: .14; }
+.sheet__body { padding: clamp(22px, 3.4vw, 40px); display: grid; gap: 18px; align-content: start; min-width: 0; }
+.sheet__close { position: absolute; top: 14px; right: 14px; z-index: 2; background: rgba(3, 10, 22, .7); border: 1px solid var(--line); color: var(--white); padding: 10px 14px; cursor: pointer; font: 600 .7rem/1 var(--f-ui); letter-spacing: .2em; text-transform: uppercase; clip-path: var(--chamfer); }
+.sheet__close:hover { background: var(--blue); color: var(--night); }
+.sheet__name { margin: 0; font: 400 clamp(2.6rem, 6vw, 4.6rem)/.88 var(--f-display); word-break: break-word; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.stat { padding: 12px; border: 1px solid var(--line); background: rgba(3, 10, 22, .5); }
+.stat b { display: block; font: 400 1.5rem/1.1 var(--f-display); font-variant-numeric: tabular-nums; }
+.stat span { font: 600 .62rem/1 var(--f-ui); letter-spacing: .2em; text-transform: uppercase; color: var(--mist); }
+.example { margin: 0; font-size: .82rem; color: var(--mist); }
+
+.back { padding-block: 0 80px; }
+.btn { position: relative; display: inline-flex; align-items: center; gap: 12px; padding: 16px 24px; border: 0; cursor: pointer; text-decoration: none; font: 700 .78rem/1 var(--f-ui); letter-spacing: .2em; text-transform: uppercase; background: var(--blue); color: #02101f; clip-path: var(--chamfer); }
+.btn--ghost { background: rgba(6, 158, 246, .1); color: var(--white); box-shadow: inset 0 0 0 1px rgba(169, 225, 255, .35); }
+.footer { padding-block: 24px calc(env(safe-area-inset-bottom, 0px) + 28px); border-top: 1px solid var(--line); font: 500 .8rem/1.4 var(--f-ui); color: var(--mist); }
+
+@media (max-width: 980px) {
+  .players { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 12px; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); }
+  .pcard { flex: 0 0 min(64vw, 260px); scroll-snap-align: start; }
+  .ceo { grid-template-columns: minmax(0, 1fr); }
+  .ceo__photo { aspect-ratio: 4 / 4.8; }
+  .ceo__photo img { object-position: 50% 30%; }
+  .ceo__photo::after { background: linear-gradient(180deg, transparent 55%, rgba(7, 27, 54, .95)); }
+  .sheet__grid { grid-template-columns: minmax(0, 1fr); }
+  .sheet__art { min-height: 300px; }
+}
+@media (max-width: 760px) {
+  .nav__links li:not(.keep) { display: none; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { * { transition-duration: .01ms !important; } }
+</style>
+</head>
+<body>
+<canvas id="stars" aria-hidden="true"></canvas>
+<div class="bg-glow" aria-hidden="true"></div>
+<img class="bg-eagle" id="bgEagle" src="assets/logo-512.png" alt="" aria-hidden="true">
+
+<header class="nav" id="nav">
+  <a class="brand" href="index.html" aria-label="Blue Hope, accueil"><img src="assets/logo-128.png" alt=""><span>BLUE HOPE</span></a>
+  <nav aria-label="Navigation principale">
+    <ul class="nav__links">
+      <li class="keep"><a href="index.html">Accueil</a></li>
+      <li><a href="index.html#highlights">Highlights</a></li>
+      <li class="keep"><a href="equipe.html" aria-current="page">Équipe</a></li>
+      <li><a href="index.html#rejoindre">Rejoindre</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <section class="hero wrap">
+    <p class="eyebrow">Valorant · Saison 2026</p>
+    <div class="hero__row">
+      <h1 class="h-xl"><span class="mask"><span>L'équipe</span></span><span class="mask"><span class="stroke">Blue Hope</span></span></h1>
+      <div class="counts" aria-label="Composition">
+        <div class="count"><b>1</b><span>CEO</span></div>
+        <div class="count"><b id="nPlayers">5</b><span>Joueurs</span></div>
+        <div class="count"><b>1</b><span>Line-up</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap" aria-labelledby="t-ceo">
+    <div class="section__head">
+      <div><p class="eyebrow">Direction</p><h2 class="h-sec" id="t-ceo">CEO</h2></div>
+    </div>
+    <article class="ceo reveal" id="ceo"></article>
+  </section>
+
+  <section class="section wrap" aria-labelledby="t-players">
+    <div class="section__head">
+      <div><p class="eyebrow">Roster Valorant</p><h2 class="h-sec" id="t-players">Joueurs</h2></div>
+      <p class="lead">Clique sur un joueur pour voir son agent, ses réglages et son setup.</p>
+    </div>
+    <div class="players" id="players"></div>
+  </section>
+
+  <section class="back wrap"><a class="btn btn--ghost" href="index.html">← Retour à l'accueil</a></section>
+  <footer class="footer wrap">© 2026 Blue Hope Esport · Valorant est une marque de Riot Games. Site non affilié à Riot Games.</footer>
+</main>
+
+<div class="sheet-veil" id="sheetVeil" hidden></div>
+<dialog class="sheet" id="sheet" aria-labelledby="sheetName" aria-modal="true">
+  <button class="sheet__close" id="sheetClose" type="button">Fermer ✕</button>
+  <div class="sheet__grid">
+    <div class="sheet__art" id="sheetArt"></div>
+    <div class="sheet__body" id="sheetBody"></div>
+  </div>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   Contenu modifiable.
+   CEO : setup réel (liens fournis). Joueurs : setups d'exemple, à remplacer.
+   ═══════════════════════════════════════════════════════════════ */
+const TEAM = {
+  ceo: {
+    name: "Atipik59", role: "CEO", photo: "assets/ceo-atipik59.jpg",
+    text: "Fondateur et CEO de Blue Hope. Il construit la structure, accompagne le roster et porte le projet en compétition.",
+    setup: [
+      { cat: "Souris", name: "Logitech G PRO X2 SUPERSTRIKE", url: "https://www.logitechg.com/fr-fr/shop/p/pro-x2-superstrike-mouse.910-007777", icon: "mouse" },
+      { cat: "Logitech G", name: "Équipement Logitech G", url: "https://logitechg-emea.sjv.io/VOy64J", icon: "gear" },
+      { cat: "Logitech G", name: "Équipement Logitech G", url: "https://logitechg-emea.sjv.io/VOy6j3", icon: "gear" },
+      { cat: "Logitech G", name: "Équipement Logitech G", url: "https://logitechg-emea.sjv.io/k4jokn", icon: "gear" },
+      { cat: "Logitech G", name: "Équipement Logitech G", url: "https://logitechg-emea.sjv.io/m4g20e", icon: "gear" },
+    ],
+  },
+  // agentId : portrait chargé depuis media.valorant-api.com (images Riot Games)
+  players: [
+    { name: "eliks", role: "Initiateur", tag: "IGL", agent: "Fade", agentId: "dade69b4-4f5a-8528-247b-219e5a1facd6",
+      settings: { dpi: 800, sens: .32, res: "1920×1080", hz: 240 },
+      setup: { Souris: "Logitech G PRO X SUPERLIGHT 2", Clavier: "Logitech G PRO X TKL", Casque: "Logitech G PRO X 2", Tapis: "Artisan Zero Soft", Écran: "BenQ Zowie XL2546K 240 Hz" } },
+    { name: "surime", role: "Contrôleur", tag: "Smoke", agent: "Brimstone", agentId: "9f0d8ba9-4140-b941-57d3-a7ad57c6b417",
+      settings: { dpi: 400, sens: .7, res: "1920×1080", hz: 240 },
+      setup: { Souris: "Zowie EC2-CW", Clavier: "Wooting 60HE+", Casque: "HyperX Cloud II", Tapis: "Zowie G-SR-SE", Écran: "AOC 25G3ZM 240 Hz" } },
+    { name: "LeShootdAmine", role: "Duelliste", tag: "", agent: "Jett", agentId: "add6443a-41bd-e414-f6ad-e58d267f4e95",
+      settings: { dpi: 1600, sens: .18, res: "1920×1080", hz: 360 },
+      setup: { Souris: "Razer Viper V3 Pro", Clavier: "Wooting 60HE+", Casque: "Razer BlackShark V2 Pro", Tapis: "Artisan Hayate Otsu", Écran: "ASUS ROG Swift PG259QN 360 Hz" } },
+    { name: "garoh", role: "Sentinelle", tag: "", agent: "Cypher", agentId: "117ed9e3-49f3-6512-3ccf-0cada7e3823b",
+      settings: { dpi: 800, sens: .4, res: "1920×1080", hz: 240 },
+      setup: { Souris: "Logitech G PRO X SUPERLIGHT 2", Clavier: "SteelSeries Apex Pro TKL", Casque: "SteelSeries Arctis Nova 7", Tapis: "SteelSeries QcK Heavy", Écran: "BenQ Zowie XL2546K 240 Hz" } },
+    { name: "imrxnszn", role: "Flex", tag: "", agent: "Raze", agentId: "f94c3b30-42be-e959-889c-5aa313dba261",
+      settings: { dpi: 800, sens: .35, res: "1920×1080", hz: 280 },
+      setup: { Souris: "Pulsar X2V2", Clavier: "Logitech G PRO X 60", Casque: "Logitech G PRO X 2", Tapis: "Artisan Zero Mid", Écran: "ASUS TUF VG259QM 280 Hz" } },
+  ],
+};
+
+(() => {
+  "use strict";
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fine = matchMedia("(pointer: fine)").matches;
+  const esc = (v) => String(v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const portrait = (id) => `https://media.valorant-api.com/agents/${id}/fullportrait.png`;
+  const ICON = {
+    Souris: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="3" width="14" height="26" rx="7"/><path d="M16 3v8M9 11h14"/></svg>',
+    Clavier: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="9" width="28" height="15" rx="2"/><path d="M6 14h2M11 14h2M16 14h2M21 14h2M26 14h0M8 19h16"/></svg>',
+    Casque: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 20v-4a11 11 0 0 1 22 0v4"/><rect x="3" y="18" width="6" height="9" rx="2"/><rect x="23" y="18" width="6" height="9" rx="2"/></svg>',
+    Tapis: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="26" height="18" rx="3"/><path d="M7 21h6"/></svg>',
+    Écran: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="26" height="17" rx="2"/><path d="M12 27h8M16 22v5"/></svg>',
+    mouse: null,
+    gear: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 3l11 6v14l-11 6-11-6V9z"/><path d="M16 15l11-6M16 15v14M16 15L5 9"/></svg>',
+  };
+  ICON.mouse = ICON.Souris;
+
+  const gearItem = (cat, name, url, icon) => url
+    ? `<li><a class="gear" href="${esc(url)}" target="_blank" rel="sponsored noopener">${ICON[icon] || ICON.gear}<span class="gear__cat">${esc(cat)}</span><span class="gear__name">${esc(name)}</span></a></li>`
+    : `<li><div class="gear">${ICON[icon] || ICON.gear}<span class="gear__cat">${esc(cat)}</span><span class="gear__name">${esc(name)}</span></div></li>`;
+
+  // CEO
+  const c = TEAM.ceo;
+  $("#ceo").innerHTML = `
+    <div class="ceo__photo"><img src="${esc(c.photo)}" alt="Photo de ${esc(c.name)}"><span class="ceo__badge"><img src="assets/logo-128.png" alt="">BLUE HOPE</span></div>
+    <div class="ceo__body">
+      <span class="ceo__role">${esc(c.role)}</span>
+      <h3 class="ceo__name">${esc(c.name)}</h3>
+      <p class="ceo__text">${esc(c.text)}</p>
+      <p class="setup-title">Son setup</p>
+      <ul class="setup">${c.setup.map((g) => gearItem(g.cat, g.name, g.url, g.icon)).join("")}</ul>
+    </div>`;
+
+  // players
+  $("#nPlayers").textContent = TEAM.players.length;
+  $("#players").innerHTML = TEAM.players.map((p, i) => `
+    <button class="pcard" type="button" data-i="${i}" aria-haspopup="dialog" aria-label="Voir la fiche de ${esc(p.name)}">
+      <span class="pcard__in">
+        <img class="pcard__emblem" src="assets/logo-512.png" alt="">
+        <img class="pcard__agent" src="${portrait(p.agentId)}" alt="" loading="lazy" onerror="this.remove()">
+        <span class="pcard__fade"></span>
+        <span class="pcard__agentname">${esc(p.agent)}</span>
+        <span class="pcard__role">${esc(p.role)}${p.tag ? ` <span class="tag">${esc(p.tag)}</span>` : ""}</span>
+        <span class="pcard__name">${esc(p.name)}</span>
+        <span class="pcard__more">Voir la fiche →</span>
+        <span class="pcard__shine"></span>
+      </span>
+    </button>`).join("");
+
+  // player sheet
+  const sheet = $("#sheet"), veil = $("#sheetVeil");
+  let lastFocus = null, lenis = null;
+  function openSheet(i) {
+    const p = TEAM.players[i], s = p.settings;
+    $("#sheetArt").innerHTML = `<img class="emblem" src="assets/logo-512.png" alt=""><img class="agent" src="${portrait(p.agentId)}" alt="${esc(p.agent)}" onerror="this.remove()">`;
+    $("#sheetBody").innerHTML = `
+      <span class="ceo__role">${esc(p.role)}${p.tag ? ` · ${esc(p.tag)}` : ""} · ${esc(p.agent)}</span>
+      <h3 class="sheet__name" id="sheetName">${esc(p.name)}</h3>
+      <div class="stats">
+        <div class="stat"><b>${s.dpi}</b><span>DPI</span></div>
+        <div class="stat"><b>${s.sens}</b><span>Sensi</span></div>
+        <div class="stat"><b>${Math.round(s.dpi * s.sens)}</b><span>eDPI</span></div>
+        <div class="stat"><b>${s.hz} Hz</b><span>${esc(s.res)}</span></div>
+      </div>
+      <p class="setup-title">Setup</p>
+      <ul class="setup">${Object.entries(p.setup).map(([cat, name]) => gearItem(cat, name, null, cat)).join("")}</ul>
+      <p class="example">Setup et réglages donnés à titre d'exemple.</p>`;
+    sheet.setAttribute("open", ""); veil.hidden = false; if (lenis) lenis.stop();
+    lastFocus = document.activeElement; $("#sheetClose").focus();
+    if (window.gsap && !reduce) {
+      gsap.fromTo(sheet, { y: 40, opacity: 0, scale: .97 }, { y: 0, opacity: 1, scale: 1, duration: .6, ease: "expo.out" });
+      gsap.from("#sheetArt .agent", { y: 80, opacity: 0, duration: .9, ease: "expo.out", delay: .05 });
+      gsap.from("#sheetBody > *", { y: 20, opacity: 0, duration: .6, stagger: .05, ease: "expo.out", delay: .1 });
+    }
+  }
+  $$(".pcard").forEach((b) => b.addEventListener("click", () => openSheet(+b.dataset.i)));
+  function closeSheet() { sheet.removeAttribute("open"); veil.hidden = true; if (lenis) lenis.start(); if (lastFocus) lastFocus.focus(); }
+  $("#sheetClose").addEventListener("click", closeSheet);
+  veil.addEventListener("click", closeSheet);
+  addEventListener("keydown", (e) => { if (e.key === "Escape" && sheet.hasAttribute("open")) closeSheet(); });
+
+  // card tilt
+  if (fine && !reduce) $$(".pcard").forEach((el) => {
+    const inner = el.querySelector(".pcard__in");
+    el.addEventListener("pointermove", (e) => {
+      const r = el.getBoundingClientRect(), px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+      inner.style.setProperty("--rx", `${(.5 - py) * 16}deg`); inner.style.setProperty("--ry", `${(px - .5) * 16}deg`);
+      inner.style.setProperty("--mx", `${px * 100}%`); inner.style.setProperty("--my", `${py * 100}%`);
+    });
+    el.addEventListener("pointerleave", () => { inner.style.setProperty("--rx", "0deg"); inner.style.setProperty("--ry", "0deg"); });
+  });
+
+  // light star field (2D canvas, capped pixel ratio)
+  const cv = $("#stars"), ctx = cv.getContext("2d");
+  let W = 0, H = 0, stars = [];
+  function size() {
+    const pr = Math.min(devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight; cv.width = W * pr; cv.height = H * pr; ctx.setTransform(pr, 0, 0, pr, 0, 0);
+    stars = Array.from({ length: Math.round(W * H / 9000) }, () => ({ x: Math.random() * W, y: Math.random() * H, z: .2 + Math.random() * .8, p: Math.random() * 6.28 }));
+  }
+  size(); addEventListener("resize", size);
+  let sy = 0;
+  function drawStars(t) {
+    ctx.clearRect(0, 0, W, H);
+    for (const s of stars) {
+      const y = ((s.y - sy * s.z * .15) % H + H) % H;
+      const a = .25 + .55 * s.z * (.6 + .4 * Math.sin(t * .0015 + s.p));
+      ctx.fillStyle = `rgba(150, 215, 255, ${a})`;
+      ctx.fillRect(s.x, y, s.z * 1.6, s.z * 1.6);
+    }
+  }
+
+  // scroll, motion
+  const nav = $("#nav"), eagle = $("#bgEagle");
+  if (window.gsap) {
+    gsap.registerPlugin(ScrollTrigger);
+    if (!reduce && window.Lenis) {
+      lenis = new Lenis({ lerp: .09 });
+      lenis.on("scroll", ScrollTrigger.update);
+      gsap.ticker.add((time) => lenis.raf(time * 1000)); gsap.ticker.lagSmoothing(0);
+    }
+    gsap.ticker.add((time) => {
+      sy = scrollY; nav.classList.toggle("is-scrolled", sy > 30);
+      eagle.style.transform = `translate(-50%, -50%) rotate(${sy * .02}deg) scale(${1 + sy * .0002})`;
+      if (!reduce) drawStars(time * 1000); else if (!drawStars.done) { drawStars(0); drawStars.done = true; }
+    });
+    if (!reduce) {
+      gsap.from(".hero .mask > span", { yPercent: 110, rotate: 4, duration: 1.2, stagger: .1, ease: "expo.out" });
+      gsap.from(".count", { y: 30, opacity: 0, duration: .9, stagger: .08, ease: "expo.out", delay: .3 });
+      gsap.from("#ceo", { y: 60, opacity: 0, duration: 1.1, ease: "expo.out", scrollTrigger: { trigger: "#ceo", start: "top 88%" } });
+      gsap.from("#ceo .gear", { y: 24, opacity: 0, duration: .7, stagger: .06, ease: "expo.out", scrollTrigger: { trigger: "#ceo .setup", start: "top 92%" } });
+      gsap.from(".pcard", { y: 80, opacity: 0, rotateX: -25, duration: 1, stagger: .08, ease: "expo.out", scrollTrigger: { trigger: "#players", start: "top 88%" } });
+      $$(".h-sec").forEach((h) => gsap.from(h, { yPercent: 40, opacity: 0, duration: 1, ease: "expo.out", scrollTrigger: { trigger: h, start: "top 90%" } }));
+    }
+  } else {
+    drawStars(0);
+  }
+})();
+</script>
+</body>
+</html>

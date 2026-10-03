@@ -225,6 +225,7 @@ main { position: relative; z-index: 1; }
 /* ── roster ───────────────────────────────────────── */
 .roster { padding-block: 16vh 14vh; }
 .roster__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 20px 40px; margin-bottom: 48px; }
+.roster__more { margin-top: 32px; }
 .cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(10px, 1.4vw, 20px); }
 .card { perspective: 900px; outline: none; }
 .card__in {
@@ -357,6 +358,7 @@ main { position: relative; z-index: 1; }
       <li><a href="#jeu" data-scramble>Notre jeu</a></li>
       <li><a href="#highlights" data-scramble>Highlights</a></li>
       <li><a href="#roster" data-scramble>Roster</a></li>
+      <li><a href="equipe.html" data-scramble>Équipe</a></li>
       <li><a href="#rejoindre" data-scramble>Rejoindre</a></li>
     </ul>
   </nav>
@@ -367,6 +369,7 @@ main { position: relative; z-index: 1; }
   <a href="#jeu"><span>02</span>Notre jeu</a>
   <a href="#highlights"><span>03</span>Highlights</a>
   <a href="#roster"><span>04</span>Roster</a>
+  <a href="equipe.html"><span>↗</span>Équipe &amp; setups</a>
   <a href="#rejoindre"><span>05</span>Rejoindre</a>
 </div>
 
@@ -457,6 +460,8 @@ main { position: relative; z-index: 1; }
       <p class="lead">Cinq rôles, une seule équipe. Voici le line-up Blue Hope.</p>
     </div>
     <div class="cards" id="cards"></div>
+    <div class="roster__more"><a class="btn" href="equipe.html" data-magnetic>Voir l'équipe et les setups
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a></div>
   </section>
 
   <!-- JOIN -->
