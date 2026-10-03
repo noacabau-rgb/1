@@ -107,7 +107,7 @@ main { position: relative; z-index: 1; }
   text-wrap: balance; letter-spacing: .005em;
 }
 .h-section .stroke { color: transparent; -webkit-text-stroke: 1.5px var(--ice); }
-.lead { max-width: 46ch; color: var(--mist); text-shadow: 0 2px 24px var(--night); font-size: clamp(1.02rem, 1.4vw, 1.18rem); }
+.lead { max-width: 46ch; color: var(--mist);  font-size: clamp(1.02rem, 1.4vw, 1.18rem); }
 .split-line { display: block; overflow: hidden; padding-block: .06em; margin-block: -.06em; }
 .split-line > span { display: inline-block; will-change: transform; }
 
@@ -167,7 +167,7 @@ main { position: relative; z-index: 1; }
   margin: 0; max-width: 14em; font: 600 clamp(1.7rem, 4.1vw, 3.6rem)/1.14 var(--f-body); letter-spacing: -.01em; text-wrap: pretty;
 }
 .manifesto__text .w { color: #4d6688; transition: color .2s; }
-.manifesto__text, .h-section, .hero__sub, .moment__desc { text-shadow: 0 2px 28px rgba(3, 10, 22, .85); }
+
 .manifesto__tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 40px; padding: 0; list-style: none; }
 .manifesto__tags li { font: 600 .74rem/1 var(--f-ui); letter-spacing: .2em; text-transform: uppercase; padding: 12px 16px; border: 1px solid var(--line); color: var(--ice); clip-path: var(--chamfer); background: rgba(6, 158, 246, .06); }
 
@@ -593,7 +593,7 @@ const CONFIG = {
     } catch (e) { return null; }
     const narrow = () => innerWidth < 760;
     let quality = 1;   // lowered automatically if frames get slow
-    const DPR = () => Math.min(devicePixelRatio || 1, narrow() ? 1.25 : 1.25) * quality;
+    const DPR = () => Math.min(devicePixelRatio || 1, 2) * quality;
     renderer.setPixelRatio(DPR());
     renderer.setSize(innerWidth, innerHeight, false);
     const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
@@ -726,9 +726,8 @@ const CONFIG = {
     const composer = new THREE.EffectComposer(renderer, rt);
     composer.setPixelRatio(DPR()); composer.setSize(innerWidth, innerHeight);
     composer.addPass(new THREE.RenderPass(scene, camera));
-    const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .6, .55, .86);
-    const bloomSize = bloom.setSize.bind(bloom);
-    bloom.setSize = (w, h) => bloomSize(Math.max(1, w / 2), Math.max(1, h / 2));
+    const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .6, .35, .86);
+    bloom.compositeMaterial.uniforms.bloomFactors.value = [1, .8, .45, 0, 0];   // drop the coarsest mips: they read as blocky haze
     composer.addPass(bloom);
     const finish = new THREE.ShaderPass({
       uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uAb: { value: .006 }, uExp: { value: .95 }, uRes: { value: new THREE.Vector2(innerWidth, innerHeight) } },
@@ -739,11 +738,10 @@ const CONFIG = {
         float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
         void main(){
           vec2 d = vUv - .5; float r = dot(d, d);
-          vec2 o = d * uAb * (1. + r * 4.);
-          vec3 c = vec3(texture2D(tDiffuse, vUv + o).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv - o).b);
+          vec3 c = texture2D(tDiffuse, vUv).rgb;
           c = srgb(aces(c * uExp));
           c *= 1. - r * .75;
-          c += (h(vUv * uRes + fract(uTime) * 91.) - .5) * .03;
+          c += (h(gl_FragCoord.xy + fract(uTime) * 61.) - .5) / 255.;   // invisible dither: no banding in dark gradients
           gl_FragColor = vec4(c, 1.);
         }`,
     });
@@ -802,7 +800,7 @@ const CONFIG = {
       dust.position.y = (scrollY || 0) * .0016;
       dustMat.uniforms.uTime.value = t; dustMat.uniforms.uWarp.value = clamp(Math.abs(state.vel) * .004, 0, 1.5);
       bloom.strength = .3 + .4 * c.glow;
-      finish.uniforms.uTime.value = t; finish.uniforms.uAb.value = .004 + clamp(Math.abs(state.vel) * .00008, 0, .012);
+      finish.uniforms.uTime.value = t; 
       bloom.enabled = state.bloomOn; composer.render(dt);
       adapt(dt);
     }
@@ -813,7 +811,7 @@ const CONFIG = {
       if (acc < 1) return;
       const avg = acc / frames; acc = 0; frames = 0;
       if (++settle < 3) return;                       // ignore the loading seconds
-      if (avg > 1 / 45 && quality > .5) { quality = Math.max(.5, quality - .15); resize(); }
+      if (avg > 1 / 45 && quality > .6) { quality = Math.max(.6, quality - .1); resize(); }
       else if (avg < 1 / 58 && quality < 1) { quality = Math.min(1, quality + .05); resize(); }
       state.bloomOn = quality > .55;
     }
