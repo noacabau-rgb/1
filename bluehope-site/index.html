@@ -237,10 +237,18 @@ main { position: relative; z-index: 1; }
 .card:hover .card__in, .card:focus-visible .card__in { border-color: rgba(6, 158, 246, .8); }
 .card__emblem { position: absolute; left: 50%; top: 40%; width: 150%; transform: translate(-50%, -50%) translateZ(-20px); opacity: .13; filter: saturate(1.4); transition: opacity .4s, transform .6s; }
 .card:hover .card__emblem { opacity: .28; transform: translate(-50%, -54%) scale(1.06); }
+.card__agent {
+  position: absolute; left: 50%; bottom: 0; height: 112%; width: auto; max-width: none; transform: translateX(-50%) translateZ(10px);
+  object-fit: contain; object-position: bottom; filter: drop-shadow(0 0 30px rgba(6, 158, 246, .35)); transition: transform .6s cubic-bezier(.2, .8, .2, 1);
+}
+.card:hover .card__agent, .card:focus-visible .card__agent { transform: translateX(-50%) translateZ(10px) scale(1.06); }
+.card__fade { position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, rgba(3, 10, 22, .95) 70%); pointer-events: none; }
+.card__tag { display: inline-block; margin-left: 6px; padding: 3px 6px; background: var(--blue); color: var(--night); font-weight: 700; letter-spacing: .14em; }
+.card__name { word-break: break-word; text-transform: none !important; letter-spacing: .02em; }
 .card__icon { position: absolute; top: 18px; left: 18px; width: 34px; height: 34px; color: var(--ice); transform: translateZ(30px); }
 .card__lock { position: absolute; top: 22px; right: 16px; font: 600 .62rem/1 var(--f-ui); letter-spacing: .22em; color: var(--mist); }
 .card__role { margin: 0; font: 600 .72rem/1 var(--f-ui); letter-spacing: .24em; text-transform: uppercase; color: var(--blue); transform: translateZ(24px); }
-.card__name { margin: 0; font: 400 clamp(1.5rem, 2.1vw, 2.1rem)/.95 var(--f-display); text-transform: uppercase; transform: translateZ(36px); }
+.card__name { margin: 0; font: 400 clamp(1.25rem, 1.75vw, 1.9rem)/.95 var(--f-display); text-transform: uppercase; transform: translateZ(36px); }
 .card__meta { margin: 0; color: var(--mist); font-size: .85rem; transform: translateZ(18px); }
 .card__shine {
   position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s; mix-blend-mode: color-dodge;
@@ -446,7 +454,7 @@ main { position: relative; z-index: 1; }
   <section class="roster wrap" id="roster" data-pose="roster" data-name="Roster">
     <div class="roster__head">
       <div><p class="eyebrow">Roster</p><h2 class="h-section"><span class="split-line"><span>Line-up</span></span><span class="split-line"><span class="stroke">2026</span></span></h2></div>
-      <p class="lead">Cinq rôles, une seule équipe. Les joueurs seront dévoilés ici.</p>
+      <p class="lead">Cinq rôles, une seule équipe. Voici le line-up Blue Hope.</p>
     </div>
     <div class="cards" id="cards"></div>
   </section>
@@ -510,12 +518,13 @@ main { position: relative; z-index: 1; }
    Remplace "À annoncer" par les pseudos et "#" par vos vrais liens.
    ═══════════════════════════════════════════════════════════════ */
 const CONFIG = {
+  // agent: portrait chargé depuis media.valorant-api.com (images Riot Games)
   roster: [
-    { role: "Duelliste",  name: "À annoncer", icon: "duelist" },
-    { role: "Initiateur", name: "À annoncer", icon: "initiator" },
-    { role: "Contrôleur", name: "À annoncer", icon: "controller" },
-    { role: "Sentinelle", name: "À annoncer", icon: "sentinel" },
-    { role: "Flex",       name: "À annoncer", icon: "flex" },
+    { name: "eliks",        role: "Initiateur", tag: "IGL", agent: "Fade",      agentId: "dade69b4-4f5a-8528-247b-219e5a1facd6", icon: "initiator" },
+    { name: "surime",       role: "Contrôleur", tag: "Smoke", agent: "Brimstone", agentId: "9f0d8ba9-4140-b941-57d3-a7ad57c6b417", icon: "controller" },
+    { name: "LeShootdAmine", role: "Duelliste", tag: "",    agent: "Jett",      agentId: "add6443a-41bd-e414-f6ad-e58d267f4e95", icon: "duelist" },
+    { name: "garoh",        role: "Sentinelle", tag: "",    agent: "Cypher",    agentId: "117ed9e3-49f3-6512-3ccf-0cada7e3823b", icon: "sentinel" },
+    { name: "imrxnszn",     role: "Flex",       tag: "",    agent: "Raze",      agentId: "f94c3b30-42be-e959-889c-5aa313dba261", icon: "flex" },
   ],
   links: { Discord: "#", TikTok: "#", Twitch: "#", X: "#", YouTube: "#" },
 };
@@ -549,9 +558,11 @@ const CONFIG = {
     <article class="card" tabindex="0" data-tilt>
       <div class="card__in">
         <img class="card__emblem" src="assets/logo-512.png" alt="" aria-hidden="true">
+        ${p.agentId ? `<img class="card__agent" src="https://media.valorant-api.com/agents/${p.agentId}/fullportrait.png" alt="${p.agent}" loading="lazy" onerror="this.remove()">` : ""}
+        <span class="card__fade" aria-hidden="true"></span>
         <span class="card__icon" aria-hidden="true">${ICONS[p.icon] || ICONS.flex}</span>
-        <span class="card__lock">LOCKED</span>
-        <p class="card__role">${p.role}</p>
+        <span class="card__lock">${p.agent ? p.agent.toUpperCase() : "LOCKED"}</span>
+        <p class="card__role">${p.role}${p.tag ? ` <b class="card__tag">${p.tag}</b>` : ""}</p>
         <h3 class="card__name">${p.name}</h3>
         <p class="card__meta">Blue Hope · Line-up 2026</p>
         <span class="card__shine" aria-hidden="true"></span><span class="card__flash" aria-hidden="true"></span>

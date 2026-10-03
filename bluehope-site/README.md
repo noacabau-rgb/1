@@ -13,7 +13,8 @@ sont chargées depuis leurs CDN : il faut une connexion internet.
 
 ## Modifier le contenu
 En haut du script principal de `index.html`, l'objet `CONFIG` :
-- `roster` : remplace `"À annoncer"` par les pseudos (et le rôle si besoin) ;
+- `roster` : pseudo, rôle, badge (IGL…) et agent de chaque joueur. Le portrait de l'agent est
+  chargé depuis `media.valorant-api.com` grâce à `agentId` ; s'il ne charge pas, la carte affiche l'aigle ;
 - `links` : remplace les `"#"` par les liens Discord, TikTok, Twitch, X, YouTube.
 
 La vidéo des highlights est `assets/highlights.mp4` (l'edit Blue Hope en 720×1280).
