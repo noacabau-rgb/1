@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serpent Émeraude</title>
+<style>
+  :root { --bg-in: #0f2a1c; --bg-out: #020604; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    background: radial-gradient(ellipse 70% 65% at 50% 46%, var(--bg-in) 0%, #06140d 45%, var(--bg-out) 100%);
+  }
+  body.transparent { background: transparent; }
+  canvas { display: block; width: 100vw; height: 100vh; outline: none; }
+  #hint {
+    position: fixed; bottom: 16px; left: 0; right: 0; text-align: center;
+    font: 12px/1.4 system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase;
+    color: rgba(190, 240, 200, .35); pointer-events: none;
+  }
+  body.still #hint { display: none; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="hint">Glisser pour tourner · molette pour zoomer</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const params = new URLSearchParams(location.search);
+const STILL = params.has('still');
+const TRANSPARENT = params.has('transparent');
+if (STILL) document.body.classList.add('still');
+if (TRANSPARENT) document.body.classList.add('transparent');
+
+// ---------------------------------------------------------------- renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.55;
+
+const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.1, 100);
+camera.position.set(2.2, 4.3, 10.6);
+if (params.get('cam')) camera.position.set(...params.get('cam').split(',').map(Number));
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1.85, 0);
+if (params.get('target')) controls.target.set(...params.get('target').split(',').map(Number));
+controls.enableDamping = true;
+controls.minDistance = 4;
+controls.maxDistance = 18;
+controls.maxPolarAngle = Math.PI * 0.53;
+controls.autoRotate = !STILL;
+controls.autoRotateSpeed = 0.6;
+controls.update();
+
+// ---------------------------------------------------------------- helpers
+const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const mix = (a, b, t) => a + (b - a) * t;
+let seed = 7;
+const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+// ---------------------------------------------------------------- scale textures
+// u runs along the body (tail -> head), v runs around it (0 = spine, 0.5 = belly).
+const TW = 512, TH = 1024, COLS = 14, ROWS = 28;
+const cw = TW / COLS, ch = TH / ROWS;
+
+function makeCanvas() {
+  const c = document.createElement('canvas'); c.width = TW; c.height = TH;
+  return [c, c.getContext('2d')];
+}
+const [colC, col] = makeCanvas();
+const [bmpC, bmp] = makeCanvas();
+const [rghC, rgh] = makeCanvas();
+
+function bodyColor(v) {
+  // distance from spine (0) to belly (1)
+  const d = 1 - Math.abs(v - 0.5) * 2;               // 0 at spine, 1 at belly
+  const spine = [0.0, 0.13, 0.05], flank = [0.01, 0.40, 0.12], lime = [0.16, 0.60, 0.10], belly = [0.80, 0.84, 0.36];
+  let c;
+  if (d < 0.5) { const t = smooth(0.0, 0.5, d); c = spine.map((x, i) => mix(x, flank[i], t)); }
+  else if (d < 0.8) { const t = smooth(0.5, 0.8, d); c = flank.map((x, i) => mix(x, lime[i], t)); }
+  else { const t = smooth(0.8, 0.86, d); c = lime.map((x, i) => mix(x, belly[i], t)); }
+  return c;
+}
+const rgb = (c, k = 1) => `rgb(${c.map(x => Math.round(Math.min(1, x * k) * 255)).join(',')})`;
+
+// dorsal diamond motif, one per tile
+function diamond(u, v) {
+  const dv = Math.min(v, 1 - v);                      // distance from spine
+  const du = Math.abs(u - 0.5);
+  return du * 1.0 + dv * 2.0;                          // < 0.34 inside
+}
+
+function scalePath(ctx, x, y, w, h) {
+  // teardrop scale, free tip pointing toward -u (tail)
+  ctx.beginPath();
+  ctx.moveTo(x + w * 0.55, y);
+  ctx.bezierCurveTo(x + w * 0.55, y - h * 0.62, x - w * 0.15, y - h * 0.58, x - w * 0.62, y);
+  ctx.bezierCurveTo(x - w * 0.15, y + h * 0.58, x + w * 0.55, y + h * 0.62, x + w * 0.55, y);
+  ctx.closePath();
+}
+
+col.fillStyle = '#06301a'; col.fillRect(0, 0, TW, TH);
+bmp.fillStyle = '#000'; bmp.fillRect(0, 0, TW, TH);
+rgh.fillStyle = '#888'; rgh.fillRect(0, 0, TW, TH);
+
+const BELLY = 0.095;   // half-width of the ventral plate band in v
+for (let i = 0; i < COLS; i++) {
+  for (let j = 0; j < ROWS; j++) {
+    const cx = (i + 0.5) * cw, cy = (j + 0.5 + (i % 2) * 0.5) * ch;
+    const v = (cy / TH) % 1, u = cx / TW;
+    if (Math.abs(v - 0.5) < BELLY - 0.01) continue;
+    const jitter = 0.86 + rand() * 0.28;
+    let c = bodyColor(v);
+    const dm = diamond(u, v);
+    if (dm < 0.1) c = [0.86, 0.96, 0.52];                                      // pale heart
+    else if (dm < 0.26) c = [0.30, 0.74, 0.12];                                // lime diamond
+    else if (dm < 0.34) c = [0.0, 0.05, 0.02];                                 // black rim
+    else if (dm < 0.4) c = c.map(x => x * 0.6);                                // shadow halo
+    // flank spots
+    if (dm > 0.4 && Math.abs(Math.abs(v - 0.5) - 0.24) < 0.1 && rand() < 0.06) c = [0.7, 0.9, 0.35];   // sparse pale flecks
+    for (const ox of [-TW, 0, TW]) for (const oy of [-TH, 0, TH]) {
+      const x = cx + ox, y = cy + oy, w = cw * 1.32, h = ch * 1.18;
+      if (x < -w || x > TW + w || y < -h || y > TH + h) continue;
+      // colour: lighter centre, dark crevices
+      let g = col.createRadialGradient(x + w * 0.05, y, 0, x, y, w * 0.62);
+      g.addColorStop(0, rgb(c, 1.18 * jitter)); g.addColorStop(0.65, rgb(c, 0.95 * jitter)); g.addColorStop(1, rgb(c, 0.35));
+      scalePath(col, x, y, w, h); col.fillStyle = g; col.fill();
+      // height
+      g = bmp.createRadialGradient(x + w * 0.1, y, 0, x, y, w * 0.6);
+      g.addColorStop(0, '#fff'); g.addColorStop(0.7, '#bbb'); g.addColorStop(1, '#202020');
+      scalePath(bmp, x, y, w, h); bmp.fillStyle = g; bmp.fill();
+      bmp.strokeStyle = 'rgba(255,255,255,.35)'; bmp.lineWidth = 2;   // keel
+      bmp.beginPath(); bmp.moveTo(x + w * 0.4, y); bmp.lineTo(x - w * 0.45, y); bmp.stroke();
+      // roughness: shiny centres, rough gaps
+      g = rgh.createRadialGradient(x, y, 0, x, y, w * 0.6);
+      g.addColorStop(0, '#3a3a3a'); g.addColorStop(0.8, '#5a5a5a'); g.addColorStop(1, '#c0c0c0');
+      scalePath(rgh, x, y, w, h); rgh.fillStyle = g; rgh.fill();
+    }
+  }
+}
+// ventral plates
+const by0 = (0.5 - BELLY) * TH, by1 = (0.5 + BELLY) * TH;
+for (let i = 0; i < COLS * 0.5; i++) {
+  const pw = TW / (COLS * 0.5);
+  for (const ox of [0, TW]) {
+    const x0 = i * pw - pw * 0.2 + ox - (ox ? TW : 0);
+    const c = bodyColor(0.5);
+    let g = col.createLinearGradient(x0, 0, x0 + pw * 1.2, 0);
+    g.addColorStop(0, rgb(c, 0.6)); g.addColorStop(0.25, rgb(c, 1.05)); g.addColorStop(0.9, rgb(c, 0.95)); g.addColorStop(1, rgb(c, 0.55));
+    col.fillStyle = g;
+    col.beginPath(); col.roundRect(x0, by0, pw * 1.2, by1 - by0, 18); col.fill();
+    g = bmp.createLinearGradient(x0, 0, x0 + pw * 1.2, 0);
+    g.addColorStop(0, '#222'); g.addColorStop(0.3, '#eee'); g.addColorStop(0.9, '#ccc'); g.addColorStop(1, '#333');
+    bmp.fillStyle = g;
+    bmp.beginPath(); bmp.roundRect(x0, by0, pw * 1.2, by1 - by0, 18); bmp.fill();
+    rgh.fillStyle = '#4a4a4a'; rgh.fillRect(x0 + pw * 0.15, by0, pw * 0.9, by1 - by0);
+  }
+}
+
+function tex(c, srgb) {
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const colorMap = tex(colC, true), bumpMap = tex(bmpC, false), roughMap = tex(rghC, false);
+
+const skin = new THREE.MeshPhysicalMaterial({
+  map: colorMap,
+  bumpMap, bumpScale: 2.2,
+  roughnessMap: roughMap, roughness: 0.9,
+  metalness: 0.0,
+  vertexColors: true,
+  clearcoat: 0.7, clearcoatRoughness: 0.28,
+  sheen: 0.25, sheenColor: new THREE.Color('#4dff7a'), sheenRoughness: 0.5,
+  iridescence: 0.35, iridescenceIOR: 1.6, iridescenceThicknessRange: [180, 520],
+  specularIntensity: 0.8,
+});
+
+// ---------------------------------------------------------------- snake path
+const TURNS = 2.45, TH0 = 0.35;
+const pts = [];
+const K = 70;
+for (let k = 0; k <= K; k++) {
+  const s = k / K;
+  const th = TH0 + s * TURNS * Math.PI * 2;
+  const R = 1.78 - 0.86 * s;
+  const y = 0.25 - 0.18 * (1 - smooth(0, 0.14, s)) + s * TURNS * 0.57;
+  pts.push(new THREE.Vector3(R * Math.sin(th), y, R * Math.cos(th)));
+}
+// the neck rises out of the coil in an S and the head strikes a pose toward the viewer
+pts.push(
+  new THREE.Vector3(-0.42, 1.95, -0.92),
+  new THREE.Vector3(-0.05, 2.45, -0.78),
+  new THREE.Vector3(0.22, 2.95, -0.42),
+  new THREE.Vector3(0.1, 3.35, 0.0),
+  new THREE.Vector3(-0.08, 3.58, 0.38),
+  new THREE.Vector3(0.05, 3.64, 0.78),
+  new THREE.Vector3(0.38, 3.56, 1.12),
+);
+const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+const LEN = curve.getLength();
+
+// radius & cross-section as a function of arc length
+function profile(e) {             // e: distance from tail tip
+  const d = LEN - e;              // distance from snout tip
+  const body = 0.3 + 0.025 * Math.sin(Math.PI * Math.min(1, e / (LEN * 0.8)));
+  let r;
+  if (d < 0.16) r = 0.19 * Math.sqrt(Math.max(0, 1 - (1 - d / 0.16) ** 2));         // rounded snout
+  else if (d < 0.66) r = mix(0.19, 0.29, smooth(0.16, 0.66, d));                    // head widening to jaw
+  else if (d < 0.92) r = mix(0.29, 0.215, smooth(0.66, 0.92, d));                     // behind the jaw
+  else r = mix(0.215, body, smooth(0.92, 3.6, d));                                      // neck to body
+  // tail
+  const tail = 4.2;
+  if (e < tail) r *= Math.max(0.03, Math.pow(e / tail, 0.75));
+  if (e < 0.04) r *= Math.sqrt(e / 0.04);
+  const head = smooth(1.2, 0.55, d);
+  const lat = mix(1.07, 1.42, head);     // lateral stretch
+  const ver = mix(0.92, 0.64, head);      // dorsal-ventral squash
+  return { r, lat, ver, head, d };
+}
+
+// ---------------------------------------------------------------- body geometry
+const SEG = 1600, RAD = 120;
+const P = [], T = [], D = [];
+const up = new THREE.Vector3(0, 1, 0), back = new THREE.Vector3(0, 0, -1);
+for (let i = 0; i <= SEG; i++) {
+  const t = i / SEG;
+  P.push(curve.getPointAt(t));
+  T.push(curve.getTangentAt(t).normalize());
+}
+for (let i = 0; i <= SEG; i++) {
+  const w = smooth(0.55, 0.95, Math.abs(T[i].y));
+  const ref = up.clone().multiplyScalar(1 - w).addScaledVector(back, w).normalize();
+  D.push(ref.addScaledVector(T[i], -ref.dot(T[i])).normalize());
+}
+for (let pass = 0; pass < 40; pass++) {
+  for (let i = 1; i < SEG; i++) D[i].add(D[i - 1]).add(D[i + 1]).multiplyScalar(1 / 3);
+  for (let i = 0; i <= SEG; i++) D[i].addScaledVector(T[i], -D[i].dot(T[i])).normalize();
+}
+
+const pos = [], uv = [], colr = [], idx = [];
+let uAcc = 0;
+const step = LEN / SEG;
+const tmp = new THREE.Vector3(), B = new THREE.Vector3();
+const prof = [];
+for (let i = 0; i <= SEG; i++) {
+  const pr = profile(i * step); prof.push(pr);
+  if (i > 0) uAcc += step / (Math.PI * Math.max(0.12, pr.r));
+  B.crossVectors(T[i], D[i]).normalize();
+  for (let j = 0; j <= RAD; j++) {
+    const v = j / RAD, phi = v * Math.PI * 2;
+    let cy = Math.cos(phi), cx = Math.sin(phi);
+    if (cy < 0) cy *= 0.82;                                       // flatter belly
+    // head: flat crown and squarer jaw
+    if (pr.head > 0) { cy = mix(cy, Math.sign(cy) * Math.pow(Math.abs(cy), 0.75), pr.head * 0.6); }
+    tmp.copy(P[i]).addScaledVector(D[i], cy * pr.r * pr.ver).addScaledVector(B, cx * pr.r * pr.lat);
+    pos.push(tmp.x, tmp.y, tmp.z);
+    uv.push(uAcc, v);
+    // vertex tint: mouth line, darker crown, lighter lips
+    let k = 1, kr = 1, kg = 1, kb = 1;
+    if (pr.head > 0) {
+      const ang = Math.acos(Math.cos(phi));                       // 0 spine .. PI belly
+      const mouth = Math.exp(-(((ang - 1.98) / 0.07) ** 2)) * smooth(0.75, 0.2, pr.d) * smooth(0.0, 0.05, pr.d);
+      k *= 1 - 0.85 * mouth;
+      k *= mix(1, 0.75, pr.head * smooth(1.2, 0.0, ang));         // darker crown
+      const lip = smooth(2.1, 2.5, ang) * pr.head;                // pale lower jaw
+      kr = mix(1, 1.15, lip); kg = mix(1, 1.08, lip); kb = mix(1, 1.0, lip);
+    }
+    colr.push(k * kr, k * kg, k * kb);
+  }
+}
+for (let i = 0; i < SEG; i++) for (let j = 0; j < RAD; j++) {
+  const a = i * (RAD + 1) + j, b = a + RAD + 1;
+  idx.push(a, a + 1, b, b, a + 1, b + 1);
+}
+const geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+geo.setAttribute('color', new THREE.Float32BufferAttribute(colr, 3));
+geo.setIndex(idx);
+geo.computeVertexNormals();
+
+const snake = new THREE.Group();
+scene.add(snake);
+const body = new THREE.Mesh(geo, skin);
+body.castShadow = body.receiveShadow = true;
+snake.add(body);
+
+// ---------------------------------------------------------------- head details
+function frameAt(d) {                     // local frame at distance d from snout tip
+  const i = Math.round((LEN - d) / step);
+  const b = new THREE.Vector3().crossVectors(T[i], D[i]).normalize();
+  return { p: P[i].clone(), t: T[i].clone(), n: D[i].clone(), b, pr: prof[i] };
+}
+function placeOnHead(obj, d, side, upAmt) {
+  const f = frameAt(d);
+  obj.position.copy(f.p)
+    .addScaledVector(f.b, side * f.pr.r * f.pr.lat)
+    .addScaledVector(f.n, upAmt * f.pr.r * f.pr.ver);
+  return f;
+}
+
+// eyes: golden iris with a vertical slit pupil, under a glossy cornea
+const irisCanvas = document.createElement('canvas'); irisCanvas.width = irisCanvas.height = 256;
+{
+  const c = irisCanvas.getContext('2d');
+  const g = c.createRadialGradient(128, 128, 10, 128, 128, 128);
+  g.addColorStop(0, '#fff4a0'); g.addColorStop(0.35, '#f2b81c'); g.addColorStop(0.8, '#b86a06'); g.addColorStop(1, '#3a1d02');
+  c.fillStyle = g; c.fillRect(0, 0, 256, 256);
+  for (let a = 0; a < 140; a++) {                    // iris fibres
+    const ang = rand() * Math.PI * 2, r0 = 30 + rand() * 30, r1 = 90 + rand() * 30;
+    c.strokeStyle = `rgba(${rand() > 0.5 ? '255,230,120' : '120,60,0'},${0.15 + rand() * 0.25})`;
+    c.lineWidth = 1 + rand() * 2;
+    c.beginPath(); c.moveTo(128 + Math.cos(ang) * r0, 128 + Math.sin(ang) * r0); c.lineTo(128 + Math.cos(ang) * r1, 128 + Math.sin(ang) * r1); c.stroke();
+  }
+  c.fillStyle = '#050302';
+  c.beginPath(); c.ellipse(128, 128, 15, 92, 0, 0, Math.PI * 2); c.fill();
+}
+const irisTex = new THREE.CanvasTexture(irisCanvas); irisTex.colorSpace = THREE.SRGBColorSpace;
+const irisMat = new THREE.MeshPhysicalMaterial({
+  map: irisTex, emissiveMap: irisTex, emissive: new THREE.Color('#ffb020'), emissiveIntensity: 0.6,
+  roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.02,
+});
+const browMat = skin;
+
+const eyes = [];
+for (const side of [-1, 1]) {
+  const eye = new THREE.Group();
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.078, 48, 32), irisMat);
+  // rotate so the texture's centre (u=0.5) of the sphere faces +x (outward), pupil vertical
+  ball.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2;
+  ball.scale.set(1, 1, 0.75);
+  eye.add(ball);
+  const f = placeOnHead(eye, 0.43, side * 0.84, 0.5);
+  // orient: local +x points outward (b*side), +y dorsal
+  const m = new THREE.Matrix4().makeBasis(f.b.clone().multiplyScalar(side), f.n, f.b.clone().multiplyScalar(side).cross(f.n));
+  eye.quaternion.setFromRotationMatrix(m);
+  eye.rotateY(side * 0.35); // look slightly forward
+  snake.add(eye);
+  eyes.push(eye);
+  // brow ridge
+  const brow = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), browMat);
+  brow.scale.set(0.13, 0.035, 0.06);
+  placeOnHead(brow, 0.45, side * 0.66, 0.86);
+  brow.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(f.t, f.n, f.t.clone().cross(f.n)));
+  brow.rotateY(-side * 0.25);
+  brow.castShadow = true;
+  snake.add(brow);
+  // nostril
+  const nos = new THREE.Mesh(new THREE.SphereGeometry(0.012, 12, 8), new THREE.MeshStandardMaterial({ color: '#020502', roughness: 0.6 }));
+  placeOnHead(nos, 0.08, side * 0.45, 0.45);
+  snake.add(nos);
+}
+
+// forked tongue
+const tongueMat = new THREE.MeshPhysicalMaterial({ color: '#c0122e', roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.1, sheen: 1, sheenColor: new THREE.Color('#ff6070') });
+const tongue = new THREE.Group();
+{
+  const stem = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0, -0.08), new THREE.Vector3(0, -0.01, 0.12), new THREE.Vector3(0, 0.0, 0.3)]);
+  const g1 = new THREE.TubeGeometry(stem, 32, 0.013, 12);
+  tongue.add(new THREE.Mesh(g1, tongueMat));
+  for (const s of [-1, 1]) {
+    const fork = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0, 0.29), new THREE.Vector3(s * 0.035, 0.008, 0.38), new THREE.Vector3(s * 0.085, 0.03, 0.46)]);
+    tongue.add(new THREE.Mesh(new THREE.TubeGeometry(fork, 24, 0.009, 10), tongueMat));
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.009, 10, 8), tongueMat);
+    tip.position.set(s * 0.085, 0.03, 0.46); tongue.add(tip);
+  }
+  const f = frameAt(0.05);
+  tongue.position.copy(f.p).addScaledVector(f.n, -0.06);
+  tongue.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(f.t.clone().cross(f.n).negate(), f.n, f.t));
+  tongue.rotateX(-0.12);
+  tongue.scale.setScalar(1.35);
+  tongue.traverse(o => { o.castShadow = true; });
+  snake.add(tongue);
+}
+
+// ---------------------------------------------------------------- stage
+const key = new THREE.DirectionalLight('#fff3dc', 3.2);
+key.position.set(-4, 7, 5);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.left = key.shadow.camera.bottom = -4;
+key.shadow.camera.right = key.shadow.camera.top = 4;
+key.shadow.radius = 6; key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
+scene.add(key);
+
+const rimA = new THREE.DirectionalLight('#5dffb0', 3.5); rimA.position.set(5, 3, -6); scene.add(rimA);
+const rimB = new THREE.DirectionalLight('#ffcf6a', 2.2); rimB.position.set(-6, 2.5, -4); scene.add(rimB);
+const fill = new THREE.DirectionalLight('#9fd8ff', 0.6); fill.position.set(4, 1, 6); scene.add(fill);
+const bounce = new THREE.PointLight('#3cff7a', 6, 6, 2); bounce.position.set(0, 0.25, 1.8); scene.add(bounce);
+
+const ground = new THREE.Mesh(new THREE.CircleGeometry(6, 96), new THREE.ShadowMaterial({ opacity: 0.55 }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
+scene.add(ground);
+
+// soft emerald glow on the floor
+if (!TRANSPARENT) {
+  const gc = document.createElement('canvas'); gc.width = gc.height = 256;
+  const c = gc.getContext('2d');
+  const g = c.createRadialGradient(128, 128, 0, 128, 128, 128);
+  g.addColorStop(0, 'rgba(60,255,140,0.55)'); g.addColorStop(0.4, 'rgba(20,160,80,0.18)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  c.fillStyle = g; c.fillRect(0, 0, 256, 256);
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(9, 9), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(gc), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  glow.rotation.x = -Math.PI / 2; glow.position.y = 0.002;
+  scene.add(glow);
+
+  // golden halo ring behind the snake
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(2.25, 0.035, 24, 240),
+    new THREE.MeshPhysicalMaterial({ color: '#e8b94a', metalness: 1, roughness: 0.18, clearcoat: 1, emissive: '#3a2400', emissiveIntensity: 0.4 }),
+  );
+  ring.position.set(0, 2.15, -1.6);
+  scene.add(ring);
+  // floating motes
+  const N = 260, mp = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) {
+    const a = rand() * Math.PI * 2, r = 1.5 + rand() * 3.5;
+    mp.set([Math.cos(a) * r, 0.2 + rand() * 4.5, Math.sin(a) * r - 0.5], i * 3);
+  }
+  const mg = new THREE.BufferGeometry(); mg.setAttribute('position', new THREE.BufferAttribute(mp, 3));
+  const motes = new THREE.Points(mg, new THREE.PointsMaterial({ color: '#8dffb4', size: 0.025, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending }));
+  motes.name = 'motes';
+  scene.add(motes);
+}
+
+// ---------------------------------------------------------------- animation
+const clock = new THREE.Clock();
+function frame() {
+  const t = clock.getElapsedTime();
+  if (!STILL) {
+    snake.position.y = Math.sin(t * 1.3) * 0.015;
+    // tongue flick every ~3 s
+    const ph = t % 3.2;
+    const out = ph < 0.6 ? Math.sin(ph / 0.6 * Math.PI) : 0;
+    tongue.scale.set(1.35, 1.35, 1.35 * (0.05 + 0.95 * out));
+    tongue.rotation.z = Math.sin(t * 40) * 0.12 * out;
+    const motes = scene.getObjectByName('motes');
+    if (motes) motes.rotation.y = t * 0.03;
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  if (STILL) { window.__ready = true; return; }   // single frame for exports
+  requestAnimationFrame(frame);
+}
+frame();
+window.__ready = true;
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>
