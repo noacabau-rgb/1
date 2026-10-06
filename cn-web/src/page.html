@@ -1,0 +1,1576 @@
+<title>cn-web</title>
+<meta name="description" content="cn-web conçoit, code et met en ligne des sites vitrines et des boutiques en ligne pour les indépendants, artisans et petites entreprises.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
+<style>
+/* Layout: one 1240px column. A full-width condensed headline opens the page, then text/visual rows that stack to one column on phones. */
+:root {
+  --paper: #F2F3F8;
+  --surface: #FFFFFF;
+  --ink: #14143C;
+  --muted: #565A7E;
+  --line: #D8DAEA;
+  --ultra: #3B2BFF;
+  --on-ultra: #FFFFFF;
+  --pink: #FF6FB5;
+  --sky: #BFE1FF;
+  --sun: #FFD84D;
+  --mat: #D5E8DC;
+  --mat-line: #B9D5C5;
+  --shadow: rgba(20, 20, 60, .2);
+  --ok: #138A52;
+
+  --font: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --step--1: .875rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.3rem;
+  --step-2: 1.75rem;
+  --step-3: clamp(2.1rem, 4.6vw, 3.6rem);
+  --step-4: clamp(2.6rem, 10.4vw, 8.6rem);
+  --radius: 16px;
+  --gutter: clamp(16px, 4vw, 40px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0D0E24; --surface: #17183A; --ink: #ECEDFA; --muted: #A2A6CC; --line: #2A2C58;
+    --ultra: #8A7FFF; --on-ultra: #0D0E24; --pink: #FF7DBE; --sky: #2C4C7A; --sun: #E9C23A;
+    --mat: #173127; --mat-line: #234A3A; --shadow: rgba(0, 0, 0, .5); --ok: #4CD38E;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0D0E24; --surface: #17183A; --ink: #ECEDFA; --muted: #A2A6CC; --line: #2A2C58;
+  --ultra: #8A7FFF; --on-ultra: #0D0E24; --pink: #FF7DBE; --sky: #2C4C7A; --sun: #E9C23A;
+  --mat: #173127; --mat-line: #234A3A; --shadow: rgba(0, 0, 0, .5); --ok: #4CD38E;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { text-wrap: balance; }
+p { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; border-radius: 6px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.skip { position: absolute; left: 16px; top: -60px; background: var(--ultra); color: var(--on-ultra); padding: 10px 14px; border-radius: 10px; z-index: 100; }
+.skip:focus { top: 12px; }
+.wrap { max-width: 1240px; margin-inline: auto; padding-inline: var(--gutter); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5em;
+  padding: .85em 1.35em; border-radius: 999px;
+  font: inherit; font-weight: 650; font-variation-settings: "wdth" 100; line-height: 1.1;
+  background: var(--ultra); color: var(--on-ultra); border: 2px solid var(--ultra);
+  text-decoration: none; cursor: pointer;
+  transition: transform .18s ease, background-color .18s ease;
+}
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(1px); }
+.btn--ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
+.btn--sm { padding: .55em 1em; font-size: var(--step--1); }
+.icon-btn {
+  display: inline-grid; place-items: center; width: 42px; height: 42px; flex: none;
+  border-radius: 50%; border: 2px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer;
+}
+.icon-btn:hover { border-color: var(--ink); }
+.icon-btn svg { width: 18px; height: 18px; }
+
+/* Header */
+.progress { position: fixed; inset-inline: 0; top: env(safe-area-inset-top, 0px); height: 3px; z-index: 60; pointer-events: none; }
+.progress span { display: block; height: 100%; background: var(--ultra); transform-origin: 0 50%; transform: scaleX(0); }
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50;
+  background: color-mix(in srgb, var(--paper) 84%, transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.top-in { display: flex; align-items: center; gap: 24px; min-height: 68px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 800; font-size: 1.25rem; font-variation-settings: "wdth" 90; }
+.brand-mark {
+  display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 9px;
+  background: var(--ultra); color: var(--on-ultra); font-size: .95rem; font-variation-settings: "wdth" 70; transform: rotate(-6deg);
+}
+.nav { display: flex; gap: 22px; margin-left: auto; }
+.nav a { text-decoration: none; color: var(--muted); font-weight: 550; }
+.nav a:hover { color: var(--ink); }
+.top-actions { display: flex; align-items: center; gap: 10px; }
+@media (max-width: 820px) { .nav { display: none; } .top-actions { margin-left: auto; } }
+
+/* Hero */
+.hero { padding-block: clamp(28px, 6vw, 64px) clamp(48px, 7vw, 88px); }
+.headline {
+  margin: 0; font-size: var(--step-4); line-height: .9; font-weight: 800;
+  letter-spacing: -.012em; font-variation-settings: "wdth" 72, "wght" 800;
+}
+.headline .line { display: block; white-space: nowrap; }
+.headline .line:nth-child(2) { padding-left: .9em; }
+.headline .line:nth-child(3) { color: var(--ultra); }
+.ch {
+  display: inline-block;
+  font-variation-settings: "wdth" var(--w, 72), "wght" var(--g, 800);
+  transition: font-variation-settings .35s cubic-bezier(.2, .8, .2, 1);
+  animation: drop .48s steps(4, end) both;
+  animation-delay: calc(var(--i) * 34ms);
+}
+@keyframes drop {
+  0% { transform: translateY(-.5em) rotate(-9deg); opacity: 0; }
+  40% { opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+.hero-row {
+  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-areas: "head stage" "copy stage";
+  column-gap: clamp(24px, 4vw, 56px); row-gap: clamp(24px, 3vw, 40px); align-items: center;
+}
+.hero-row .headline { grid-area: head; align-self: end; }
+.hero-copy { grid-area: copy; align-self: start; }
+.stage { grid-area: stage; }
+@media (min-width: 861px) { .headline { font-size: clamp(3rem, 6.6vw, 6.8rem); } }
+.hero-copy { display: grid; gap: 26px; min-width: 0; }
+.lead { font-size: var(--step-1); line-height: 1.45; max-width: 36ch; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.facts { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; color: var(--muted); }
+.facts li { display: flex; gap: 10px; align-items: baseline; }
+.facts li::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 3px; background: var(--pink); transform: rotate(12deg) translateY(1px); }
+.facts strong { color: var(--ink); font-weight: 700; }
+
+.stage { position: relative; margin: 0; min-width: 0; }
+.stage-view {
+  position: relative; width: 100%; aspect-ratio: 1 / 1.05; max-height: 640px;
+  background-image: radial-gradient(var(--line) 1.4px, transparent 1.6px);
+  background-size: 22px 22px; border-radius: var(--radius);
+  touch-action: pan-y;
+}
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+.labels { position: absolute; inset: 0; pointer-events: none; }
+.layer-label {
+  position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 8px;
+  font-size: var(--step--1); font-weight: 650; white-space: nowrap;
+  background: var(--surface); color: var(--ink); border: 1.5px solid var(--ink);
+  padding: 4px 10px 4px 8px; border-radius: 999px;
+  transition: opacity .3s ease;
+}
+.layer-label i { width: 8px; height: 8px; border-radius: 50%; background: var(--ultra); }
+.stage-cap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; color: var(--muted); font-size: var(--step--1); }
+.stage-cap span { max-width: 44ch; }
+.stage-fallback { display: none; position: absolute; inset: 12% 14%; }
+.stage.is-static .stage-fallback { display: block; }
+.stage.is-static canvas, .stage.is-static #explode-btn { display: none; }
+.stage-fallback div { position: absolute; inset: 0; border: 2px solid var(--ultra); border-radius: 12px; background: color-mix(in srgb, var(--surface) 70%, transparent); transform: skewY(-8deg); }
+.stage-fallback div:nth-child(2) { transform: skewY(-8deg) translate(26px, -26px); }
+.stage-fallback div:nth-child(3) { transform: skewY(-8deg) translate(52px, -52px); }
+.stage-fallback div:nth-child(4) { transform: skewY(-8deg) translate(78px, -78px); background: color-mix(in srgb, var(--pink) 30%, transparent); }
+@media (max-width: 860px) {
+  .hero-row { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "copy" "stage"; }
+  .stage-view { aspect-ratio: 1 / 1; max-height: 460px; }
+}
+
+/* Sections */
+.sec { padding-block: clamp(64px, 9vw, 120px); }
+.sec--tint { background: var(--surface); border-block: 1px solid var(--line); }
+.sec-head { display: grid; gap: 14px; margin-bottom: clamp(32px, 5vw, 56px); max-width: 760px; }
+.sec-head h2 {
+  margin: 0; font-size: var(--step-3); line-height: .98; font-weight: 800;
+  font-variation-settings: "wdth" 78, "wght" 800; letter-spacing: -.01em;
+}
+.sec-head p { color: var(--muted); max-width: 60ch; }
+
+/* Stop motion */
+.sm-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(24px, 4vw, 56px); align-items: start; }
+.sm-screen {
+  position: relative; aspect-ratio: 8 / 5; border-radius: var(--radius); overflow: hidden;
+  background: var(--mat); border: 2px solid var(--ink);
+}
+.sm-screen canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.sm-controls { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+.sm-controls input[type="range"] { flex: 1; min-width: 0; accent-color: var(--ultra); }
+.sm-count { font-size: var(--step--1); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.steps button {
+  display: grid; grid-template-columns: auto 1fr; gap: 16px; width: 100%; text-align: left;
+  padding: 14px 16px; border-radius: 14px; border: 0; background: transparent;
+  font: inherit; color: var(--muted); cursor: pointer; transition: background-color .2s ease, color .2s ease;
+}
+.steps button:hover { background: color-mix(in srgb, var(--ultra) 7%, transparent); }
+.steps .num {
+  display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+  border: 2px solid currentColor; font-weight: 800; font-variant-numeric: tabular-nums;
+}
+.steps .st-body { display: grid; gap: 4px; }
+.steps strong { font-size: var(--step-1); color: var(--ink); font-variation-settings: "wdth" 90; font-weight: 700; }
+.steps button[aria-current="step"] { color: var(--ink); background: var(--surface); box-shadow: 0 0 0 2px var(--ink); }
+.steps button[aria-current="step"] .num { background: var(--ultra); border-color: var(--ultra); color: var(--on-ultra); }
+@media (max-width: 900px) { .sm-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Offers */
+.offers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: stretch; }
+.offer {
+  display: flex; flex-direction: column; gap: 18px; padding: 28px;
+  border-radius: var(--radius); background: var(--paper); border: 1.5px solid var(--line);
+}
+.offer h3 { margin: 0; font-size: var(--step-2); line-height: 1.05; font-variation-settings: "wdth" 85, "wght" 750; }
+.offer .price { display: flex; align-items: baseline; gap: 8px; font-variant-numeric: tabular-nums; }
+.offer .price b { font-size: clamp(2.4rem, 4vw, 3.2rem); line-height: 1; font-weight: 800; font-variation-settings: "wdth" 70, "wght" 800; }
+.offer .price small { color: var(--muted); font-size: var(--step--1); }
+.offer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.offer li { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; }
+.offer li svg { width: 18px; height: 18px; margin-top: 3px; color: var(--ultra); }
+.offer .btn { margin-top: auto; align-self: flex-start; }
+.offer--main { background: var(--ultra); color: var(--on-ultra); border-color: var(--ultra); transform: rotate(-1.2deg); }
+.offer--main .price small, .offer--main p { color: inherit; opacity: .85; }
+.offer--main li svg { color: var(--sun); }
+.offer--main .btn { background: var(--on-ultra); color: var(--ultra); border-color: var(--on-ultra); }
+.offer p { color: var(--muted); }
+.tag { display: inline-block; align-self: flex-start; font-size: var(--step--1); font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--sun); color: #14143C; }
+.care {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px;
+  margin-top: 22px; padding: 22px 28px; border-radius: var(--radius); border: 2px dashed var(--line);
+}
+.care p { color: var(--muted); max-width: 62ch; }
+.care strong { color: var(--ink); }
+.care .price b { font-size: var(--step-2); font-weight: 800; font-variation-settings: "wdth" 72; }
+@media (max-width: 900px) { .offers { grid-template-columns: minmax(0, 1fr); } .offer--main { transform: none; } }
+
+/* Quote builder */
+.quote { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(24px, 4vw, 48px); align-items: start; }
+.q-form { display: grid; gap: 30px; }
+.q-group { border: 0; margin: 0; padding: 0; display: grid; gap: 12px; min-width: 0; }
+.q-group legend, .q-label { font-weight: 700; font-size: var(--step-1); font-variation-settings: "wdth" 90; padding: 0; margin-bottom: 12px; }
+.q-hint { color: var(--muted); font-size: var(--step--1); margin-top: -8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.chip span {
+  display: inline-flex; align-items: center; gap: 8px; padding: .6em 1.05em; border-radius: 999px;
+  border: 2px solid var(--line); background: var(--surface); font-weight: 600; cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+.chip span em { font-style: normal; font-weight: 500; color: var(--muted); font-size: var(--step--1); }
+.chip:hover span { border-color: var(--ink); }
+.chip input:checked + span { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.chip input:checked + span em { color: inherit; opacity: .75; }
+.chip input:focus-visible + span { outline: 3px solid var(--pink); outline-offset: 3px; }
+.range-row { display: flex; align-items: center; gap: 16px; }
+.range-row input { flex: 1; min-width: 0; accent-color: var(--ultra); }
+.range-row output { min-width: 5.5ch; font-weight: 800; font-size: var(--step-2); font-variation-settings: "wdth" 72; font-variant-numeric: tabular-nums; text-align: right; }
+.q-result {
+  position: sticky; top: 92px; display: grid; gap: 20px; padding: 28px;
+  border-radius: var(--radius); background: var(--ink); color: var(--paper);
+}
+.q-result h3 { margin: 0; font-size: var(--step--1); font-weight: 600; opacity: .75; }
+.q-total { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+.q-total b { font-size: clamp(2.8rem, 5vw, 4.2rem); line-height: .95; font-weight: 800; font-variation-settings: "wdth" 68, "wght" 850; }
+.q-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.q-meta div { padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--paper) 10%, transparent); }
+.q-meta span { display: block; font-size: var(--step--1); opacity: .7; }
+.q-meta b { font-size: var(--step-1); font-variant-numeric: tabular-nums; }
+.tree { display: grid; gap: 10px; }
+.tree-root { justify-self: start; }
+.tree-kids { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 0 0 16px; border-left: 2px solid color-mix(in srgb, var(--paper) 35%, transparent); margin-left: 14px; }
+.node {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px;
+  font-size: var(--step--1); font-weight: 600; background: color-mix(in srgb, var(--paper) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--paper) 25%, transparent);
+}
+.node--root { background: var(--ultra); color: var(--on-ultra); border-color: var(--ultra); }
+.node--opt { background: var(--pink); color: #14143C; border-color: var(--pink); }
+.node.is-new { animation: pop .36s steps(3, end); }
+@keyframes pop { 0% { transform: scale(.4) rotate(-10deg); } 60% { transform: scale(1.15) rotate(4deg); } 100% { transform: none; } }
+.q-result .btn { background: var(--paper); color: var(--ink); border-color: var(--paper); justify-self: start; }
+.q-note { font-size: var(--step--1); opacity: .7; }
+@media (max-width: 900px) { .quote { grid-template-columns: minmax(0, 1fr); } .q-result { position: static; } }
+
+/* Responsive demo */
+.rs-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 16px; }
+.rs-tools .chips { gap: 8px; }
+.rs-tools output { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; }
+.rs-range { width: 100%; accent-color: var(--ultra); margin-top: 14px; }
+.rs-stage {
+  position: relative; padding: 18px 40px 18px 18px; border-radius: var(--radius);
+  background-image: radial-gradient(var(--line) 1.4px, transparent 1.6px); background-size: 22px 22px;
+  border: 1.5px solid var(--line); overflow: hidden;
+}
+.rs-frame {
+  position: relative; width: var(--w, 900px); max-width: 100%; min-width: 0;
+  border: 2px solid var(--ink); border-radius: 14px; background: var(--surface); overflow: hidden;
+  container-type: inline-size; container-name: mk;
+}
+.rs-handle {
+  position: absolute; top: 50%; right: -30px; transform: translateY(-50%);
+  width: 22px; height: 70px; border-radius: 999px; border: 2px solid var(--ink); background: var(--sun);
+  cursor: ew-resize; touch-action: none; padding: 0;
+}
+.rs-handle::before { content: ""; position: absolute; inset: 18px 7px; border-inline: 2px solid #14143C; }
+.rs-wrap { position: relative; width: fit-content; max-width: 100%; }
+.mk { color: var(--ink); font-size: 14px; }
+.mk-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.mk-logo { font-weight: 800; font-variation-settings: "wdth" 80; }
+.mk-links { display: none; gap: 16px; color: var(--muted); }
+.mk-burger { display: grid; gap: 4px; }
+.mk-burger i { display: block; width: 20px; height: 2px; background: var(--ink); }
+.mk-hero { display: grid; gap: 14px; padding: 18px 16px; }
+.mk-hero h3 { margin: 0; font-size: clamp(1.3rem, 7cqi, 2.8rem); line-height: 1; font-weight: 800; font-variation-settings: "wdth" 75; }
+.mk-hero p { color: var(--muted); max-width: 40ch; }
+.mk-btn { justify-self: start; background: var(--ink); color: var(--paper); padding: 8px 14px; border-radius: 999px; font-weight: 700; font-size: 13px; }
+.mk-img { aspect-ratio: 16 / 9; border-radius: 10px; background: linear-gradient(160deg, var(--sky), var(--pink)); position: relative; overflow: hidden; }
+.mk-img::after { content: ""; position: absolute; width: 30%; aspect-ratio: 1; border-radius: 50%; background: var(--sun); right: 12%; top: 16%; }
+.mk-cards { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 0 16px 18px; }
+.mk-card { padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--paper); }
+.mk-card b { display: block; margin-bottom: 4px; }
+.mk-card span { color: var(--muted); font-size: 13px; }
+@container mk (min-width: 600px) {
+  .mk-hero { grid-template-columns: 1fr 1fr; align-items: center; padding: 26px 22px; }
+  .mk-hero .mk-img { grid-row: 1 / span 3; grid-column: 2; }
+  .mk-cards { grid-template-columns: 1fr 1fr; padding: 0 22px 22px; }
+}
+@container mk (min-width: 960px) {
+  .mk-links { display: flex; }
+  .mk-burger { display: none; }
+  .mk-bar { padding: 14px 22px; }
+  .mk-cards { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Example styles */
+.demos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.demo { display: grid; gap: 14px; margin: 0; align-content: start; }
+.demo-card {
+  --rx: 0deg; --ry: 0deg; --gx: 50%; --gy: 50%;
+  position: relative; aspect-ratio: 4 / 5; border-radius: 18px; overflow: hidden;
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
+  transform-style: preserve-3d; transition: transform .25s ease-out; border: 2px solid var(--ink);
+}
+.demo-card.is-tilting { transition: none; }
+.demo-card::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at var(--gx) var(--gy), rgba(255, 255, 255, .35), transparent 45%);
+  opacity: 0; transition: opacity .25s ease;
+}
+.demo-card:hover::after { opacity: 1; }
+.demo-in { position: absolute; inset: 0; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+.demo-in > * { transform: translateZ(30px); }
+.demo figcaption { display: grid; gap: 2px; }
+.demo figcaption b { font-size: var(--step-1); font-variation-settings: "wdth" 88; }
+.demo figcaption span { color: var(--muted); font-size: var(--step--1); }
+/* Demo 1: bakery */
+.d1 { background: #FFF1DC; color: #4A2410; font-family: Georgia, "Times New Roman", serif; }
+.d1 .d-nav { display: flex; justify-content: space-between; font-size: 12px; }
+.d1 h4 { margin: auto 0 0; font-size: 2.1rem; line-height: 1; font-weight: 400; font-style: italic; }
+.d1 .d-bread { position: absolute; right: -20px; top: 70px; width: 62%; aspect-ratio: 1.6; border-radius: 50%; background: #D9883C; box-shadow: inset 0 -14px 0 #B5652A; transform: rotate(-14deg) translateZ(60px); }
+.d1 .d-bread::before, .d1 .d-bread::after { content: ""; position: absolute; top: 30%; width: 34%; height: 8px; border-radius: 4px; background: #F6C98F; transform: rotate(-30deg); left: 18%; }
+.d1 .d-bread::after { left: 50%; }
+.d1 .d-btn { align-self: flex-start; padding: 7px 14px; border-radius: 999px; background: #4A2410; color: #FFF1DC; font: 600 12px/1 Arial, sans-serif; }
+/* Demo 2: garage */
+.d2 { background: #1B1F24; color: #F2F2F2; font-family: "Arial Narrow", Arial, sans-serif; }
+.d2 .d-stripe { height: 10px; background: repeating-linear-gradient(-45deg, #FFC81A 0 12px, #1B1F24 12px 24px); margin: -18px -18px 0; }
+.d2 h4 { margin: 18px 0 0; font-size: 1.9rem; line-height: .95; font-weight: 800; text-transform: uppercase; letter-spacing: .02em; }
+.d2 .d-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
+.d2 .d-row div { padding: 10px; border: 1px solid #3A414A; border-radius: 6px; font-size: 12px; }
+.d2 .d-row b { display: block; color: #FFC81A; font-size: 1.2rem; }
+.d2 .d-sub { color: #B9C0C9; font-size: 14px; }
+.d2 .d-wheel { position: absolute; right: 22px; top: 46%; width: 90px; aspect-ratio: 1; border-radius: 50%; border: 14px solid #2C333B; background: radial-gradient(#FFC81A 0 18%, #1B1F24 19% 100%); transform: translateZ(70px); }
+/* Demo 3: yoga */
+.d3 { background: #DDE7D8; color: #23382B; font-family: var(--font); }
+.d3 .d-nav { display: flex; justify-content: space-between; font-size: 12px; }
+.d3 .d-sun { width: 50%; aspect-ratio: 1; border-radius: 50%; background: #F3B79B; margin: 14px auto 0; transform: translateZ(50px); }
+.d3 h4 { margin: auto 0 0; font-size: 1.8rem; line-height: 1.05; font-weight: 300; font-variation-settings: "wdth" 110, "wght" 300; }
+.d3 .d-slots { display: flex; gap: 6px; flex-wrap: wrap; }
+.d3 .d-slots span { padding: 4px 9px; border-radius: 999px; border: 1px solid #23382B; font-size: 11px; }
+@media (max-width: 900px) { .demos { grid-template-columns: minmax(0, 1fr); max-width: 420px; } }
+
+/* Quality */
+.quality { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(24px, 4vw, 56px); align-items: center; }
+.gauges { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.gauge { display: grid; justify-items: center; gap: 8px; text-align: center; }
+.gauge svg { width: 100%; max-width: 120px; aspect-ratio: 1; transform: rotate(-90deg); }
+.gauge .g-bg { fill: none; stroke: var(--line); stroke-width: 8; }
+.gauge .g-fg { fill: none; stroke: var(--ok); stroke-width: 8; stroke-linecap: round; }
+.gauge-box { position: relative; width: 100%; max-width: 120px; display: grid; place-items: center; }
+.gauge-box svg { grid-area: 1 / 1; }
+.gauge-box b { grid-area: 1 / 1; font-size: var(--step-2); font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ok); }
+.gauge span { font-size: var(--step--1); color: var(--muted); }
+.vitals { margin: 0; display: grid; gap: 0; border-top: 1.5px solid var(--line); }
+.vitals div { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding: 16px 0; border-bottom: 1.5px solid var(--line); }
+.vitals dt { font-weight: 700; }
+.vitals dd { margin: 0; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ok); }
+.vitals small { grid-column: 1 / -1; color: var(--muted); font-size: var(--step--1); }
+.q-actions { margin-top: 22px; }
+@media (max-width: 900px) { .quality { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .gauges { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* FAQ */
+.faq { display: grid; gap: 10px; max-width: 860px; }
+.faq details { border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); }
+.faq summary {
+  list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  padding: 18px 20px; font-weight: 700; font-size: var(--step-1); font-variation-settings: "wdth" 90;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--paper); font-weight: 500; transition: transform .25s ease; }
+.faq details[open] summary::after { transform: rotate(45deg); background: var(--pink); color: #14143C; }
+.faq details p { padding: 0 20px 20px; color: var(--muted); max-width: 66ch; }
+
+/* Contact */
+.contact { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(24px, 4vw, 56px); align-items: start; }
+.contact .sec-head { margin-bottom: 24px; }
+.mail-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.mail-row input { font: inherit; font-weight: 700; font-size: var(--step-1); border: 0; background: transparent; color: var(--ink); padding: 0; width: 15ch; }
+.c-form { display: grid; gap: 16px; padding: clamp(20px, 3vw, 32px); border-radius: var(--radius); background: var(--surface); border: 1.5px solid var(--line); }
+.c-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field label { font-weight: 650; font-size: var(--step--1); }
+.field input, .field select, .field textarea {
+  font: inherit; color: var(--ink); background: var(--paper); border: 1.5px solid var(--line);
+  border-radius: 10px; padding: 12px 14px; width: 100%;
+}
+.field textarea { min-height: 150px; resize: vertical; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--ultra); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ultra) 25%, transparent); }
+.field .err { color: #D12C5C; font-size: var(--step--1); }
+.c-status { padding: 14px 16px; border-radius: 12px; background: color-mix(in srgb, var(--ok) 14%, transparent); border: 1.5px solid var(--ok); }
+@media (max-width: 900px) { .contact { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 520px) { .c-row { grid-template-columns: minmax(0, 1fr); } }
+
+/* Footer */
+.foot { padding-block: 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: var(--step--1); }
+.foot-in { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; align-items: center; }
+.foot .brand { color: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .ch, .node.is-new { animation: none; }
+  .ch { transition: none; }
+  .btn, .demo-card { transition: none; }
+}
+</style>
+<!--BODY-->
+<a class="skip" href="#main">Aller au contenu</a>
+<div class="progress" aria-hidden="true"><span id="progress"></span></div>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">cn</span><span>cn-web</span></a>
+    <nav class="nav" aria-label="Navigation principale">
+      <a href="#methode">Méthode</a>
+      <a href="#offres">Offres</a>
+      <a href="#exemples">Exemples</a>
+      <a href="#faq">Questions</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="top-actions">
+      <button class="icon-btn" id="theme-btn" type="button" aria-label="Passer en thème sombre">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+      </button>
+      <a class="btn btn--sm" href="#devis">Estimer mon site</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top">
+    <div class="wrap">
+      <div class="hero-row">
+        <h1 class="headline" id="headline" aria-label="Votre site web, conçu, codé et mis en ligne.">
+          <span class="line" aria-hidden="true">Votre site web,</span>
+          <span class="line" aria-hidden="true">conçu, codé</span>
+          <span class="line" aria-hidden="true">et mis en ligne.</span>
+        </h1>
+        <div class="hero-copy">
+          <p class="lead">cn-web crée des sites vitrines et des boutiques en ligne pour les indépendants, les artisans et les petites entreprises. Des sites rapides, pensés pour le mobile, que vous pouvez modifier vous-même.</p>
+          <div class="cta-row">
+            <a class="btn" href="#devis">Estimer mon site</a>
+            <a class="btn btn--ghost" href="#offres">Voir les offres</a>
+          </div>
+          <ul class="facts">
+            <li><span><strong>3 semaines</strong> en moyenne pour un site vitrine</span></li>
+            <li><span><strong>Dès 490 € HT</strong>, prix fixé avant de commencer</span></li>
+            <li><span><strong>Vous êtes propriétaire</strong> du site et du nom de domaine</span></li>
+          </ul>
+        </div>
+        <figure class="stage" id="stage">
+          <div class="stage-view" id="stage-view">
+            <canvas id="hero-canvas" role="img" aria-label="Vue 3D d'une page web décomposée en quatre calques : navigateur, structure, contenu et interactions"></canvas>
+            <div class="labels" id="layer-labels" aria-hidden="true"></div>
+            <div class="stage-fallback" aria-hidden="true"><div></div><div></div><div></div><div></div></div>
+          </div>
+          <figcaption class="stage-cap">
+            <span>Une page web, ce sont quatre calques empilés. Déplacez le pointeur ou faites glisser pour la faire pivoter.</span>
+            <button class="btn btn--ghost btn--sm" id="explode-btn" type="button">Assembler les calques</button>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec sec--tint" id="methode">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>De l'appel à la mise en ligne</h2>
+        <p>Chaque projet suit les mêmes cinq étapes. Regardez-les en stop motion, image par image, ou choisissez une étape pour y aller directement.</p>
+      </div>
+      <div class="sm-grid">
+        <div class="sm-player">
+          <div class="sm-screen" id="sm-screen">
+            <canvas id="sm-canvas" role="img" aria-label="Animation en stop motion : un site web assemblé avec des morceaux de papier découpé sur un tapis de coupe"></canvas>
+          </div>
+          <div class="sm-controls">
+            <button class="icon-btn" id="sm-play" type="button" aria-label="Mettre en pause">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+            </button>
+            <label class="sr-only" for="sm-range">Image de l'animation</label>
+            <input type="range" id="sm-range" min="0" max="103" value="0" step="1">
+            <output class="sm-count" id="sm-count" for="sm-range">Image 1 sur 104</output>
+          </div>
+        </div>
+        <ol class="steps" id="sm-steps">
+          <li><button type="button" data-step="0"><span class="num">1</span><span class="st-body"><strong>Appel découverte</strong><span>30 minutes pour parler de votre activité, de vos clients et de ce que le site doit faire.</span></span></button></li>
+          <li><button type="button" data-step="1"><span class="num">2</span><span class="st-body"><strong>Maquette</strong><span>La structure de chaque page, validée avec vous avant d'écrire la moindre ligne de code.</span></span></button></li>
+          <li><button type="button" data-step="2"><span class="num">3</span><span class="st-body"><strong>Développement</strong><span>Design, textes et images intégrés. Vous suivez l'avancement sur un lien de prévisualisation.</span></span></button></li>
+          <li><button type="button" data-step="3"><span class="num">4</span><span class="st-body"><strong>Mise en ligne</strong><span>Nom de domaine, hébergement, HTTPS, et tests sur mobile, tablette et ordinateur.</span></span></button></li>
+          <li><button type="button" data-step="4"><span class="num">5</span><span class="st-body"><strong>Suivi</strong><span>Statistiques de visites, mises à jour de sécurité et modifications à la demande.</span></span></button></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="offres">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Trois offres, un prix annoncé avant de commencer</h2>
+        <p>Les prix sont hors taxes et comprennent le design, le développement, la mise en ligne et une formation d'une heure pour gérer votre site.</p>
+      </div>
+      <div class="offers">
+        <article class="offer">
+          <h3>Page unique</h3>
+          <div class="price"><b>490 €</b><small>HT</small></div>
+          <p>Pour présenter une offre, un événement ou une activité qui démarre.</p>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span>Une page longue avec plusieurs sections</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span>Formulaire de contact</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span>En ligne en 1 semaine</span></li>
+          </ul>
+          <button class="btn btn--ghost" type="button" data-pick="landing">Choisir la page unique</button>
+        </article>
+        <article class="offer offer--main">
+          <span class="tag">Le plus demandé</span>
+          <h3>Site vitrine</h3>
+          <div class="price"><b>890 €</b><small>HT</small></div>
+          <p>Pour les artisans, commerces et indépendants qui veulent être trouvés et contactés.</p>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span>Jusqu'à 5 pages</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span>Design sur mesure, adapté au mobile</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span>Référencement Google de base</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span>En ligne en 3 semaines</span></li>
+          </ul>
+          <button class="btn" type="button" data-pick="vitrine">Choisir le site vitrine</button>
+        </article>
+        <article class="offer">
+          <h3>Boutique en ligne</h3>
+          <div class="price"><b>2 490 €</b><small>HT</small></div>
+          <p>Pour vendre vos produits en ligne et encaisser les paiements par carte.</p>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span>Catalogue, panier et paiement sécurisé</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span>Gestion des stocks et des commandes</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span>Jusqu'à 8 pages, dont les CGV</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span>En ligne en 6 semaines</span></li>
+          </ul>
+          <button class="btn btn--ghost" type="button" data-pick="ecommerce">Choisir la boutique</button>
+        </article>
+      </div>
+      <div class="care">
+        <p><strong>Maintenance, 49 € HT par mois.</strong> Hébergement, nom de domaine, sauvegardes quotidiennes, mises à jour de sécurité et une heure de modifications chaque mois. Sans engagement.</p>
+        <a class="btn btn--ghost btn--sm" href="#devis">L'ajouter à mon estimation</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec sec--tint" id="devis">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Estimez votre site en une minute</h2>
+        <p>Choisissez le type de site, le nombre de pages et les options. Le prix et l'arborescence se mettent à jour à chaque clic.</p>
+      </div>
+      <div class="quote">
+        <form class="q-form" id="q-form" novalidate>
+          <fieldset class="q-group">
+            <legend>Type de site</legend>
+            <div class="chips">
+              <label class="chip"><input type="radio" name="type" value="landing" id="t-landing"><span>Page unique <em>490 €</em></span></label>
+              <label class="chip"><input type="radio" name="type" value="portfolio" id="t-portfolio"><span>Portfolio <em>690 €</em></span></label>
+              <label class="chip"><input type="radio" name="type" value="vitrine" id="t-vitrine" checked><span>Site vitrine <em>890 €</em></span></label>
+              <label class="chip"><input type="radio" name="type" value="ecommerce" id="t-ecommerce"><span>Boutique en ligne <em>2 490 €</em></span></label>
+            </div>
+          </fieldset>
+          <div class="q-group">
+            <label class="q-label" for="q-pages">Nombre de pages</label>
+            <p class="q-hint" id="q-pages-hint">5 pages incluses, puis 90 € par page supplémentaire.</p>
+            <div class="range-row">
+              <input type="range" id="q-pages" min="1" max="20" value="5" aria-describedby="q-pages-hint">
+              <output id="q-pages-out" for="q-pages">5</output>
+            </div>
+          </div>
+          <fieldset class="q-group">
+            <legend>Options</legend>
+            <div class="chips">
+              <label class="chip"><input type="checkbox" name="opt" value="blog" id="o-blog"><span>Blog <em>+350 €</em></span></label>
+              <label class="chip"><input type="checkbox" name="opt" value="booking" id="o-booking"><span>Réservation en ligne <em>+390 €</em></span></label>
+              <label class="chip"><input type="checkbox" name="opt" value="lang" id="o-lang"><span>Version anglaise <em>+450 €</em></span></label>
+              <label class="chip"><input type="checkbox" name="opt" value="logo" id="o-logo"><span>Logo et couleurs <em>+290 €</em></span></label>
+              <label class="chip"><input type="checkbox" name="opt" value="copy" id="o-copy"><span>Rédaction des textes <em>+60 € / page</em></span></label>
+              <label class="chip"><input type="checkbox" name="opt" value="seo" id="o-seo"><span>Référencement local <em>+250 €</em></span></label>
+              <label class="chip"><input type="checkbox" name="opt" value="anim" id="o-anim"><span>Animations et 3D <em>+600 €</em></span></label>
+            </div>
+          </fieldset>
+          <fieldset class="q-group">
+            <legend>Délai</legend>
+            <div class="chips">
+              <label class="chip"><input type="radio" name="speed" value="std" id="s-std" checked><span>Standard</span></label>
+              <label class="chip"><input type="radio" name="speed" value="fast" id="s-fast"><span>Express <em>+25 %</em></span></label>
+            </div>
+          </fieldset>
+          <fieldset class="q-group">
+            <legend>Après la mise en ligne</legend>
+            <div class="chips">
+              <label class="chip"><input type="checkbox" id="o-care" value="care"><span>Maintenance <em>49 € / mois</em></span></label>
+            </div>
+          </fieldset>
+        </form>
+        <aside class="q-result" aria-live="polite">
+          <h3>Estimation</h3>
+          <div class="q-total"><b id="q-total">890 €</b><span>HT</span></div>
+          <div class="q-meta">
+            <div><span>Délai estimé</span><b id="q-delay">3 semaines</b></div>
+            <div><span>Maintenance</span><b id="q-care">Non incluse</b></div>
+          </div>
+          <div class="tree">
+            <span class="node node--root tree-root">Accueil</span>
+            <div class="tree-kids" id="q-tree"></div>
+          </div>
+          <p class="q-note">Estimation indicative. Le devis final est envoyé après l'appel découverte et ne change plus ensuite.</p>
+          <button class="btn" type="button" id="q-use">Envoyer cette estimation</button>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="ecrans">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Un seul site, qui s'adapte à chaque écran</h2>
+        <p>Plus de la moitié des visites se font sur téléphone. Faites glisser la poignée jaune pour voir la même page passer d'une colonne à trois.</p>
+      </div>
+      <div class="rs-tools">
+        <div class="chips" role="group" aria-label="Taille d'écran">
+          <label class="chip"><input type="radio" name="dev" value="375" id="d-375"><span>Téléphone</span></label>
+          <label class="chip"><input type="radio" name="dev" value="768" id="d-768"><span>Tablette</span></label>
+          <label class="chip"><input type="radio" name="dev" value="1200" id="d-1200" checked><span>Ordinateur</span></label>
+        </div>
+        <output id="rs-out" for="rs-range">1200 px, ordinateur</output>
+      </div>
+      <div class="rs-stage" id="rs-stage">
+        <div class="rs-wrap">
+          <div class="rs-frame" id="rs-frame">
+            <div class="mk">
+              <div class="mk-bar">
+                <span class="mk-logo">Atelier Nomade</span>
+                <span class="mk-links"><span>Créations</span><span>Ateliers</span><span>À propos</span><span>Contact</span></span>
+                <span class="mk-burger" aria-hidden="true"><i></i><i></i><i></i></span>
+              </div>
+              <div class="mk-hero">
+                <h3>Céramiques faites main à Lyon</h3>
+                <p>Bols, tasses et vases tournés à l'atelier. Cours d'initiation le samedi.</p>
+                <span class="mk-btn">Réserver un cours</span>
+                <div class="mk-img"></div>
+              </div>
+              <div class="mk-cards">
+                <div class="mk-card"><b>Boutique</b><span>Pièces uniques, expédiées en 48 h</span></div>
+                <div class="mk-card"><b>Ateliers</b><span>6 places, tout le matériel fourni</span></div>
+                <div class="mk-card"><b>Sur commande</b><span>Services de table pour restaurants</span></div>
+              </div>
+            </div>
+          </div>
+          <button class="rs-handle" id="rs-handle" type="button" aria-label="Redimensionner l'écran (flèches gauche et droite)"></button>
+        </div>
+      </div>
+      <label class="sr-only" for="rs-range">Largeur de l'écran en pixels</label>
+      <input class="rs-range" type="range" id="rs-range" min="300" max="1200" value="1200" step="1">
+    </div>
+  </section>
+
+  <section class="sec sec--tint" id="exemples">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Chaque métier a son style</h2>
+        <p>Trois maquettes de démonstration pour montrer jusqu'où va le sur-mesure. Survolez-les : elles réagissent en relief.</p>
+      </div>
+      <div class="demos">
+        <figure class="demo">
+          <div class="demo-card d1">
+            <div class="demo-in">
+              <div class="d-nav"><b>Boulangerie Lune</b><span>Commander</span></div>
+              <div class="d-bread"></div>
+              <h4>Le pain du quartier, cuit deux fois par jour</h4>
+              <span class="d-btn">Voir les horaires</span>
+            </div>
+          </div>
+          <figcaption><b>Boulangerie</b><span>Maquette de démonstration. Chaleureux, typographie à empattements.</span></figcaption>
+        </figure>
+        <figure class="demo">
+          <div class="demo-card d2">
+            <div class="demo-in">
+              <div class="d-stripe"></div>
+              <h4>Garage Ferrand</h4>
+              <p class="d-sub">Entretien et réparation, toutes marques</p>
+              <div class="d-wheel"></div>
+              <div class="d-row"><div><b>48 h</b>Révision complète</div><div><b>7 j / 7</b>Dépannage</div></div>
+            </div>
+          </div>
+          <figcaption><b>Garage automobile</b><span>Maquette de démonstration. Contrasté, lisible au premier coup d'œil.</span></figcaption>
+        </figure>
+        <figure class="demo">
+          <div class="demo-card d3">
+            <div class="demo-in">
+              <div class="d-nav"><b>Studio Respire</b><span>Planning</span></div>
+              <div class="d-sun"></div>
+              <h4>Yoga doux, en petit groupe</h4>
+              <div class="d-slots"><span>Lun 18 h</span><span>Mer 12 h 30</span><span>Sam 10 h</span></div>
+            </div>
+          </div>
+          <figcaption><b>Studio de yoga</b><span>Maquette de démonstration. Calme, réservation intégrée.</span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="qualite">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Des sites rapides, mesurés avant la livraison</h2>
+        <p>Chaque site passe l'audit Google Lighthouse avant d'être mis en ligne. Voici les scores visés et les seuils des Core Web Vitals que Google utilise pour classer les pages.</p>
+      </div>
+      <div class="quality">
+        <div>
+          <div class="gauges" id="gauges">
+            <div class="gauge" data-v="98"><div class="gauge-box"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="g-bg" cx="50" cy="50" r="42"/><circle class="g-fg" cx="50" cy="50" r="42"/></svg><b>98</b></div><span>Performance</span></div>
+            <div class="gauge" data-v="100"><div class="gauge-box"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="g-bg" cx="50" cy="50" r="42"/><circle class="g-fg" cx="50" cy="50" r="42"/></svg><b>100</b></div><span>Accessibilité</span></div>
+            <div class="gauge" data-v="100"><div class="gauge-box"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="g-bg" cx="50" cy="50" r="42"/><circle class="g-fg" cx="50" cy="50" r="42"/></svg><b>100</b></div><span>Bonnes pratiques</span></div>
+            <div class="gauge" data-v="100"><div class="gauge-box"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="g-bg" cx="50" cy="50" r="42"/><circle class="g-fg" cx="50" cy="50" r="42"/></svg><b>100</b></div><span>SEO</span></div>
+          </div>
+          <div class="q-actions"><button class="btn btn--ghost btn--sm" type="button" id="audit-btn">Relancer l'audit</button></div>
+        </div>
+        <dl class="vitals">
+          <div><dt>Affichage du contenu principal (LCP)</dt><dd>&lt; 2,5 s</dd><small>Temps pour afficher le plus grand élément visible.</small></div>
+          <div><dt>Réactivité aux clics (INP)</dt><dd>&lt; 200 ms</dd><small>Délai entre un clic et la réponse de la page.</small></div>
+          <div><dt>Stabilité de la mise en page (CLS)</dt><dd>&lt; 0,1</dd><small>Les éléments ne bougent pas pendant le chargement.</small></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec sec--tint" id="faq">
+    <div class="wrap">
+      <div class="sec-head"><h2>Questions fréquentes</h2></div>
+      <div class="faq">
+        <details open><summary>Est-ce que je pourrai modifier mon site moi-même ?</summary><p>Oui. Vous recevez un accès à une interface simple pour changer les textes, les photos et les horaires, et une heure de formation est incluse dans chaque offre.</p></details>
+        <details><summary>À qui appartient le site une fois livré ?</summary><p>À vous. Le nom de domaine est enregistré à votre nom et vous recevez tous les fichiers du site. Vous pouvez changer de prestataire quand vous voulez.</p></details>
+        <details><summary>Que comprend le prix affiché ?</summary><p>Le design, le développement, la mise en ligne, le certificat HTTPS, les tests sur mobile et la formation. L'hébergement et le nom de domaine sont inclus la première année, puis couverts par la maintenance si vous la choisissez.</p></details>
+        <details><summary>Est-ce que je peux payer en plusieurs fois ?</summary><p>Oui : 30 % à la signature du devis, 40 % à la validation de la maquette et 30 % à la mise en ligne.</p></details>
+        <details><summary>Mon site sera-t-il visible sur Google ?</summary><p>Chaque site est livré avec les réglages de base : titres, descriptions, plan du site et fiche Google Business Profile. L'option référencement local va plus loin pour apparaître dans les recherches de votre ville.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="contact">
+    <div class="wrap contact">
+      <div>
+        <div class="sec-head">
+          <h2>Parlons de votre projet</h2>
+          <p>Décrivez votre activité et ce que vous attendez du site. Réponse sous 24 heures ouvrées avec une proposition d'appel découverte.</p>
+        </div>
+        <div class="mail-row">
+          <label class="sr-only" for="mail">Adresse e-mail de cn-web</label>
+          <input id="mail" type="text" value="contact@cn-web.fr" readonly>
+          <button class="btn btn--ghost btn--sm" type="button" id="copy-mail">Copier l'adresse</button>
+        </div>
+      </div>
+      <form class="c-form" id="c-form" novalidate>
+        <div class="c-row">
+          <div class="field"><label for="c-name">Nom</label><input id="c-name" name="name" autocomplete="name" required></div>
+          <div class="field"><label for="c-email">E-mail</label><input id="c-email" name="email" type="email" autocomplete="email" required></div>
+        </div>
+        <div class="field">
+          <label for="c-type">Type de projet</label>
+          <select id="c-type" name="type">
+            <option value="Site vitrine">Site vitrine</option>
+            <option value="Boutique en ligne">Boutique en ligne</option>
+            <option value="Page unique">Page unique</option>
+            <option value="Portfolio">Portfolio</option>
+            <option value="Refonte d'un site existant">Refonte d'un site existant</option>
+          </select>
+        </div>
+        <div class="field"><label for="c-msg">Message</label><textarea id="c-msg" name="message" required placeholder="Mon activité, mes clients, ce que le site doit permettre…"></textarea></div>
+        <p class="err" id="c-err" hidden></p>
+        <button class="btn" type="submit">Envoyer la demande</button>
+        <div class="c-status" id="c-status" role="status" hidden></div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">cn</span><span>cn-web</span></a>
+    <span>Création de sites web sur mesure. © 2026 cn-web.</span>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  "use strict";
+  document.documentElement.lang = "fr";
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const fmt = new Intl.NumberFormat("fr-FR");
+  const euros = (n) => fmt.format(Math.round(n)).replace(/ | /g, " ") + " €";
+
+  /* ---------- Theme tokens ---------- */
+  const TOKEN_NAMES = ["paper", "surface", "ink", "muted", "line", "ultra", "on-ultra", "pink", "sky", "sun", "mat", "mat-line", "shadow"];
+  let T = {};
+  function readTokens() {
+    const cs = getComputedStyle(document.documentElement);
+    TOKEN_NAMES.forEach((n) => { T[n] = cs.getPropertyValue("--" + n).trim(); });
+  }
+  readTokens();
+  const themeListeners = [];
+  function onTheme(fn) { themeListeners.push(fn); }
+  function themeChanged() { readTokens(); themeListeners.forEach((fn) => fn()); updateThemeBtn(); }
+  const mqDark = window.matchMedia("(prefers-color-scheme: dark)");
+  mqDark.addEventListener("change", themeChanged);
+  new MutationObserver(themeChanged).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  function isDark() {
+    const t = document.documentElement.getAttribute("data-theme");
+    return t ? t === "dark" : mqDark.matches;
+  }
+  const themeBtn = $("#theme-btn");
+  function updateThemeBtn() { themeBtn.setAttribute("aria-label", isDark() ? "Passer en thème clair" : "Passer en thème sombre"); }
+  try { const saved = localStorage.getItem("cnweb-theme"); if (saved === "dark" || saved === "light") document.documentElement.setAttribute("data-theme", saved); } catch (e) {}
+  updateThemeBtn();
+  themeBtn.addEventListener("click", () => {
+    const next = isDark() ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem("cnweb-theme", next); } catch (e) {}
+  });
+
+  /* ---------- Scroll progress ---------- */
+  const bar = $("#progress");
+  function onScroll() {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    bar.style.transform = "scaleX(" + (max > 0 ? scrollY / max : 0) + ")";
+  }
+  addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------- Reactive headline ---------- */
+  const headline = $("#headline");
+  let idx = 0;
+  $$(".line", headline).forEach((line) => {
+    const text = line.textContent;
+    line.textContent = "";
+    for (const c of text) {
+      if (c === " ") { line.appendChild(document.createTextNode(" ")); continue; }
+      const s = document.createElement("span");
+      s.className = "ch";
+      s.textContent = c;
+      s.style.setProperty("--i", idx++);
+      line.appendChild(s);
+    }
+  });
+  const chars = $$(".ch", headline);
+  if (!reduceMotion) {
+    let pending = null;
+    function shape(x, y) {
+      const R = Math.max(110, innerWidth * 0.12);
+      chars.forEach((el) => {
+        const r = el.getBoundingClientRect();
+        const d = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2));
+        const k = Math.max(0, 1 - d / R);
+        el.style.setProperty("--w", (72 + k * 53).toFixed(1));
+        el.style.setProperty("--g", (800 - k * 520).toFixed(0));
+      });
+    }
+    function relax() { chars.forEach((el) => { el.style.removeProperty("--w"); el.style.removeProperty("--g"); }); }
+    headline.addEventListener("pointermove", (e) => {
+      if (pending) return;
+      pending = requestAnimationFrame(() => { shape(e.clientX, e.clientY); pending = null; });
+    });
+    headline.addEventListener("pointerleave", () => { if (pending) cancelAnimationFrame(pending); pending = null; relax(); });
+  }
+
+  /* ---------- Hero 3D: exploded web page ---------- */
+  function initHero3D() {
+    const stage = $("#stage");
+    const view = $("#stage-view");
+    const canvas = $("#hero-canvas");
+    const btn = $("#explode-btn");
+    if (!window.THREE) { stage.classList.add("is-static"); return; }
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    } catch (e) { stage.classList.add("is-static"); return; }
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(32, 4 / 3, 0.1, 100);
+    camera.position.set(0, 0, 11);
+    const group = new THREE.Group();
+    scene.add(group);
+
+    const PW = 4.2, PH = 2.7, CW = 1024, CH = 658;
+    const names = ["Navigateur", "Structure", "Contenu", "Interactions"];
+    const color = (c) => new THREE.Color(c);
+
+    function rr(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+    const painters = [
+      function base(ctx) {
+        rr(ctx, 4, 4, CW - 8, CH - 8, 30); ctx.fillStyle = T.surface; ctx.fill();
+        ctx.save(); ctx.clip();
+        ctx.fillStyle = T.paper; ctx.fillRect(0, 0, CW, 70);
+        [T.pink, T.sun, T.sky].forEach((c, i) => { ctx.beginPath(); ctx.arc(44 + i * 30, 35, 10, 0, 7); ctx.fillStyle = c; ctx.fill(); });
+        rr(ctx, 160, 18, 560, 34, 17); ctx.fillStyle = T.surface; ctx.fill();
+        ctx.fillStyle = T.muted; ctx.font = "600 20px Archivo, Arial, sans-serif"; ctx.fillText("https://atelier-nomade.fr", 182, 42);
+        ctx.strokeStyle = T.line; ctx.lineWidth = 2;
+        for (let i = 0; i <= 12; i++) { const x = 40 + i * (944 / 12); ctx.beginPath(); ctx.moveTo(x, 80); ctx.lineTo(x, CH - 20); ctx.stroke(); }
+        ctx.restore();
+      },
+      function structure(ctx) {
+        ctx.strokeStyle = T.ultra; ctx.lineWidth = 4; ctx.setLineDash([16, 10]);
+        [[40, 92, 944, 54], [40, 172, 440, 230], [520, 172, 464, 230], [40, 428, 296, 190], [364, 428, 296, 190], [688, 428, 296, 190]]
+          .forEach((r) => { rr(ctx, r[0], r[1], r[2], r[3], 14); ctx.stroke(); });
+        ctx.setLineDash([]);
+        ctx.fillStyle = T.ultra; ctx.font = "700 18px Archivo, Arial, sans-serif";
+        ctx.fillText("en-tête", 52, 84); ctx.fillText("titre", 52, 166); ctx.fillText("image", 532, 166); ctx.fillText("cartes", 52, 422);
+      },
+      function content(ctx) {
+        ctx.fillStyle = T.ink; ctx.font = "800 30px Archivo, Arial, sans-serif"; ctx.fillText("Atelier Nomade", 58, 130);
+        ctx.fillStyle = T.muted; [620, 720, 820, 900].forEach((x) => { rr(ctx, x, 112, 64, 12, 6); ctx.fill(); });
+        ctx.fillStyle = T.ink; ctx.font = "800 58px Archivo, Arial, sans-serif";
+        ctx.fillText("Céramiques", 58, 236); ctx.fillText("faites main", 58, 294);
+        ctx.fillStyle = T.muted; [0, 1].forEach((i) => { rr(ctx, 58, 318 + i * 22, i ? 260 : 380, 11, 5); ctx.fill(); });
+        rr(ctx, 536, 186, 432, 202, 18); ctx.fillStyle = T.pink; ctx.fill();
+        ctx.save(); rr(ctx, 536, 186, 432, 202, 18); ctx.clip();
+        ctx.beginPath(); ctx.arc(880, 250, 40, 0, 7); ctx.fillStyle = T.sun; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(520, 400); ctx.lineTo(680, 270); ctx.lineTo(800, 400); ctx.closePath(); ctx.fillStyle = T.ultra; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(700, 400); ctx.lineTo(820, 300); ctx.lineTo(990, 400); ctx.closePath(); ctx.fillStyle = T.ink; ctx.fill();
+        ctx.restore();
+        [40, 364, 688].forEach((x, i) => {
+          rr(ctx, x + 14, 442, 268, 162, 14); ctx.fillStyle = T.sky; ctx.fill();
+          ctx.fillStyle = T.ink; ctx.font = "700 24px Archivo, Arial, sans-serif"; ctx.fillText(["Boutique", "Ateliers", "Commandes"][i], x + 34, 486);
+          ctx.fillStyle = T.muted; rr(ctx, x + 34, 506, 200, 10, 5); ctx.fill(); rr(ctx, x + 34, 526, 150, 10, 5); ctx.fill();
+        });
+      },
+      function interact(ctx) {
+        rr(ctx, 58, 360, 230, 56, 28); ctx.fillStyle = T.ultra; ctx.fill();
+        ctx.fillStyle = T["on-ultra"]; ctx.font = "700 24px Archivo, Arial, sans-serif"; ctx.fillText("Réserver un cours", 82, 396);
+        ctx.strokeStyle = T.pink; ctx.lineWidth = 4; ctx.setLineDash([10, 8]); rr(ctx, 48, 350, 250, 76, 38); ctx.stroke(); ctx.setLineDash([]);
+        ctx.save(); ctx.translate(262, 398);
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 46); ctx.lineTo(12, 35); ctx.lineTo(21, 54); ctx.lineTo(29, 50); ctx.lineTo(20, 32); ctx.lineTo(36, 32); ctx.closePath();
+        ctx.fillStyle = T.ink; ctx.fill(); ctx.strokeStyle = T.surface; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
+        rr(ctx, 880, 18, 92, 34, 17); ctx.fillStyle = T.ultra; ctx.fill();
+        ctx.beginPath(); ctx.arc(955, 35, 12, 0, 7); ctx.fillStyle = T["on-ultra"]; ctx.fill();
+        rr(ctx, 640, 576, 330, 54, 14); ctx.fillStyle = T.ink; ctx.fill();
+        ctx.fillStyle = T.paper; ctx.font = "600 20px Archivo, Arial, sans-serif"; ctx.fillText("Ajouté au panier : bol bleu", 662, 610);
+      },
+    ];
+
+    const layers = names.map((name, i) => {
+      const c = document.createElement("canvas"); c.width = CW; c.height = CH;
+      const tex = new THREE.CanvasTexture(c);
+      tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthWrite: false });
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(PW, PH), mat);
+      mesh.renderOrder = i;
+      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), new THREE.LineBasicMaterial({ transparent: true, opacity: i === 0 ? 0 : 0.7 }));
+      mesh.add(edges);
+      group.add(mesh);
+      const label = document.createElement("span");
+      label.className = "layer-label";
+      label.innerHTML = "<i></i>" + name;
+      $("#layer-labels").appendChild(label);
+      return { c, tex, mesh, edges, label, paint: painters[i] };
+    });
+
+    const cubes = [];
+    const cubeGeo = new THREE.BoxGeometry(0.16, 0.16, 0.16);
+    for (let i = 0; i < 14; i++) {
+      const m = new THREE.Mesh(cubeGeo, new THREE.MeshBasicMaterial());
+      const a = (i / 14) * Math.PI * 2;
+      m.userData = { a, r: 2.6 + (i % 3) * 0.35, y: ((i * 37) % 11) / 11 * 3 - 1.5, s: 0.15 + (i % 4) * 0.05, k: i % 3 };
+      m.add(new THREE.LineSegments(new THREE.EdgesGeometry(cubeGeo), new THREE.LineBasicMaterial()));
+      scene.add(m);
+      cubes.push(m);
+    }
+
+    function paintAll() {
+      layers.forEach((L) => {
+        const ctx = L.c.getContext("2d");
+        ctx.clearRect(0, 0, CW, CH);
+        L.paint(ctx);
+        L.tex.needsUpdate = true;
+        L.edges.material.color = color(T.ultra);
+      });
+      cubes.forEach((m) => {
+        m.material.color = color([T.ultra, T.pink, T.sun][m.userData.k]);
+        m.children[0].material.color = color(T.ink);
+      });
+    }
+    paintAll();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(paintAll);
+    onTheme(paintAll);
+
+    function resize() {
+      const w = view.clientWidth, h = view.clientHeight;
+      if (!w || !h) return;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      const fit = 3.35 / (Math.tan((camera.fov * Math.PI) / 360) * camera.aspect);
+      camera.position.z = Math.max(9.4, fit);
+      camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(view);
+    resize();
+
+    const BASE_RX = -0.5, BASE_RY = 0.58;
+    let exploded = true;
+    let ex = reduceMotion ? 0.85 : 0, exT = 0.85;
+    let rx = BASE_RX, ry = BASE_RY, trx = BASE_RX, tryy = BASE_RY;
+    let dragging = false, lastX = 0, lastY = 0, dragRY = 0, dragRX = 0;
+
+    btn.addEventListener("click", () => {
+      exploded = !exploded;
+      exT = exploded ? 0.85 : 0;
+      btn.textContent = exploded ? "Assembler les calques" : "Éclater les calques";
+      if (reduceMotion) { ex = exT; requestFrame(); }
+    });
+    addEventListener("pointermove", (e) => {
+      if (dragging) {
+        dragRY += (e.clientX - lastX) * 0.008; dragRX += (e.clientY - lastY) * 0.006;
+        dragRX = clamp(dragRX, -0.6, 0.6);
+        lastX = e.clientX; lastY = e.clientY;
+      } else if (finePointer) {
+        const r = view.getBoundingClientRect();
+        const nx = clamp((e.clientX - (r.left + r.width / 2)) / (r.width / 2), -1.5, 1.5);
+        const ny = clamp((e.clientY - (r.top + r.height / 2)) / (r.height / 2), -1.5, 1.5);
+        tryy = BASE_RY + nx * 0.32; trx = BASE_RX + ny * 0.2;
+      }
+      requestFrame();
+    }, { passive: true });
+    canvas.addEventListener("pointerdown", (e) => {
+      dragging = true; lastX = e.clientX; lastY = e.clientY;
+      canvas.setPointerCapture(e.pointerId); canvas.style.cursor = "grabbing";
+    });
+    const endDrag = () => { dragging = false; canvas.style.cursor = ""; };
+    canvas.addEventListener("pointerup", endDrag);
+    canvas.addEventListener("pointercancel", endDrag);
+
+    const v = new THREE.Vector3();
+    function placeLabels() {
+      const w = view.clientWidth, h = view.clientHeight;
+      const pts = layers.map((L) => {
+        v.set(PW / 2, PH / 2 - 0.12, 0).applyMatrix4(L.mesh.matrixWorld).project(camera);
+        return { L, x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h - 14 };
+      }).sort((a, b) => a.y - b.y);
+      // keep labels from overlapping: push each one below the previous if needed
+      for (let i = 1; i < pts.length; i++) pts[i].y = Math.max(pts[i].y, pts[i - 1].y + 32);
+      pts.forEach((p) => {
+        const L = p.L;
+        L.label.style.transform = "translate(" + Math.max(4, Math.min(p.x + 8, w - L.label.offsetWidth - 4)).toFixed(1) + "px," + p.y.toFixed(1) + "px)";
+        L.label.style.opacity = ex > 0.4 ? "1" : "0";
+      });
+    }
+
+    let visible = true, raf = 0, lastT = 0;
+    function frame(t) {
+      raf = 0;
+      const dt = Math.min(64, t - (lastT || t)); lastT = t;
+      const k = 1 - Math.pow(0.9, dt / 16);
+      ex += (exT - ex) * k * 0.9;
+      rx += (trx + dragRX - rx) * k; ry += (tryy + dragRY - ry) * k;
+      const bob = reduceMotion ? 0 : Math.sin(t * 0.0005) * 0.05;
+      group.rotation.set(rx, ry + bob, 0);
+      const gap = 0.06 + ex * 0.95;
+      layers.forEach((L, i) => {
+        L.mesh.position.z = (i - 1.5) * gap;
+        L.mesh.position.y = reduceMotion ? 0 : Math.sin(t * 0.0012 + i) * 0.04 * ex;
+      });
+      cubes.forEach((m) => {
+        const u = m.userData, a = u.a + (reduceMotion ? 0 : t * 0.00012 * (1 + u.k * 0.3));
+        m.position.set(Math.cos(a) * u.r, u.y + Math.sin(a * 2) * 0.2, Math.sin(a) * u.r * 0.6);
+        m.rotation.set(a * 2, a * 3, 0);
+        m.scale.setScalar(0.4 + ex * 0.8);
+      });
+      group.updateMatrixWorld();
+      renderer.render(scene, camera);
+      placeLabels();
+      const settling = Math.abs(exT - ex) > 0.002 || Math.abs(trx + dragRX - rx) > 0.001 || Math.abs(tryy + dragRY - ry) > 0.001;
+      if (visible && (!reduceMotion || settling)) requestFrame();
+    }
+    function requestFrame() { if (!raf && visible) raf = requestAnimationFrame(frame); }
+    new IntersectionObserver((ents) => {
+      visible = ents[0].isIntersecting;
+      if (visible) { lastT = 0; requestFrame(); }
+    }).observe(view);
+    onTheme(requestFrame);
+    requestFrame();
+  }
+  try { initHero3D(); } catch (e) { $("#stage").classList.add("is-static"); }
+
+  /* ---------- Stop motion: paper cut-out build ---------- */
+  function initStopMotion() {
+    const cv = $("#sm-canvas"), screen = $("#sm-screen");
+    const ctx = cv.getContext("2d");
+    const W = 800, H = 500, FPS = 8, TOTAL = 104, HOLD = 18;
+    const STEP_AT = [0, 14, 36, 64, 84];
+    const range = $("#sm-range"), count = $("#sm-count"), playBtn = $("#sm-play");
+    const stepBtns = $$("#sm-steps button");
+    let f = reduceMotion ? TOTAL - 1 : 0, tick = 0, playing = !reduceMotion, visible = false, raf = 0, acc = 0, last = 0;
+
+    function hash(a, b) {
+      let h = Math.imul(a ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(b + 0x632be5ab, 0xc2b2ae35);
+      h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12; h = Math.imul(h, 0x297a2d39); h ^= h >>> 15;
+      return (h >>> 0) / 4294967295;
+    }
+    const easeBack = (p) => { const c1 = 1.7, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
+    function slide(enter, dur, from, to) {
+      if (f < enter) return null;
+      const p = Math.min(1, (f - enter + 1) / dur), e = easeBack(p);
+      return [from[0] + (to[0] - from[0]) * e, from[1] + (to[1] - from[1]) * e];
+    }
+    function poly(w, h, id) {
+      const o = (k) => (hash(id, 500 + k) - 0.5) * 3;
+      ctx.beginPath();
+      ctx.moveTo(-w / 2 + o(1), -h / 2 + o(2));
+      ctx.lineTo(w / 2 + o(3), -h / 2 + o(4));
+      ctx.lineTo(w / 2 + o(5), h / 2 + o(6));
+      ctx.lineTo(-w / 2 + o(7), h / 2 + o(8));
+      ctx.closePath();
+    }
+    // Draw a paper piece whose top-left corner is at (x, y). It "boils" a little every frame, like real stop motion.
+    function paper(id, x, y, w, h, fill, inner, opt) {
+      opt = opt || {};
+      const jx = (hash(id, f) - 0.5) * 1.8, jy = (hash(id, f + 333) - 0.5) * 1.8;
+      const jr = (hash(id, f + 777) - 0.5) * 0.014 + (opt.rot || 0);
+      ctx.save();
+      ctx.translate(x + w / 2 + jx, y + h / 2 + jy);
+      ctx.rotate(jr);
+      if (opt.scale) ctx.scale(opt.scale, opt.scale);
+      ctx.save(); ctx.translate(3, 4); poly(w, h, id); ctx.fillStyle = T.shadow; ctx.fill(); ctx.restore();
+      poly(w, h, id); ctx.fillStyle = fill; ctx.fill();
+      if (inner) { ctx.save(); ctx.translate(-w / 2, -h / 2); inner(w, h); ctx.restore(); }
+      ctx.restore();
+    }
+    function bar(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
+    function text(s, x, y, size, weight, c, style) {
+      ctx.fillStyle = c; ctx.font = (style || "") + " " + weight + " " + size + "px Archivo, Arial, sans-serif"; ctx.fillText(s, x, y);
+    }
+
+    const SX = 210, SY = 52; // sheet origin
+    const wires = [[14, 36, 372, 24, 15], [14, 72, 180, 112, 18], [206, 72, 180, 112, 21], [14, 198, 116, 74, 24], [142, 198, 116, 74, 27], [270, 198, 116, 74, 30]];
+
+    function draw() {
+      const s = cv.width / W;
+      ctx.setTransform(s, 0, 0, s, 0, 0);
+      // cutting mat
+      ctx.fillStyle = T.mat; ctx.fillRect(0, 0, W, H);
+      for (let x = 0; x <= W; x += 25) { ctx.fillStyle = T["mat-line"]; ctx.fillRect(x, 0, x % 100 === 0 ? 2 : 1, H - 22); }
+      for (let y = 0; y <= H - 22; y += 25) { ctx.fillStyle = T["mat-line"]; ctx.fillRect(0, y, W, y % 100 === 0 ? 2 : 1); }
+      ctx.fillStyle = T["mat-line"]; ctx.fillRect(0, H - 22, W, 22);
+      for (let i = 0; i <= 32; i++) { ctx.fillStyle = T.ink; ctx.globalAlpha = 0.5; ctx.fillRect(i * 25, H - 22, 1, i % 4 === 0 ? 10 : 5); if (i % 4 === 0) text(String(i), i * 25 + 3, H - 6, 10, 600, T.ink); ctx.globalAlpha = 1; }
+
+      // 1. Discovery call: sticky note + blank sheet
+      let p = slide(0, 4, [-200, 40], [32, 56]);
+      if (p) paper(1, p[0], p[1], 150, 140, T.sun, () => {
+        text("Objectifs ?", 14, 34, 18, 600, "#14143C", "italic");
+        text("Vos clients ?", 14, 66, 18, 600, "#14143C", "italic");
+        text("Budget ?", 14, 98, 18, 600, "#14143C", "italic");
+        bar(14, 112, 60, 2, "#14143C");
+      }, { rot: -0.06 });
+      p = slide(5, 5, [SX, 540], [SX, SY]);
+      if (p) paper(2, p[0], p[1], 400, 300, T.surface, () => {
+        bar(0, 0, 400, 24, T.paper);
+        [T.pink, T.sun, T.sky].forEach((c, i) => { ctx.beginPath(); ctx.arc(14 + i * 13, 12, 4.5, 0, 7); ctx.fillStyle = c; ctx.fill(); });
+      });
+
+      // 2. Wireframe: dashed outlines traced one by one, with a paper pencil
+      if (f >= 14 && f < 70) {
+        ctx.save(); ctx.setLineDash([7, 5]); ctx.lineWidth = 2; ctx.strokeStyle = T.ink; ctx.globalAlpha = 0.6;
+        let lastWire = null;
+        wires.forEach((r, i) => {
+          if (f < r[4]) return;
+          const jx = (hash(40 + i, f) - 0.5) * 1.4, jy = (hash(60 + i, f) - 0.5) * 1.4;
+          ctx.strokeRect(SX + r[0] + jx, SY + r[1] + jy, r[2], r[3]);
+          lastWire = r;
+        });
+        ctx.restore();
+        if (f < 36 && lastWire) {
+          const px = SX + lastWire[0] + lastWire[2], py = SY + lastWire[1] + lastWire[3];
+          paper(3, px - 6, py - 70, 16, 120, T.sun, (w, h) => {
+            bar(0, 0, w, 14, T.pink);
+            ctx.beginPath(); ctx.moveTo(0, h); ctx.lineTo(w, h); ctx.lineTo(w / 2, h + 16); ctx.closePath(); ctx.fillStyle = "#E8C9A0"; ctx.fill();
+          }, { rot: 0.5 });
+        }
+      }
+
+      // 3. Development: coloured pieces drop onto the outlines
+      const drop = (id, enter, r, fill, inner) => {
+        const q = slide(enter, 3, [SX + r[0], -140], [SX + r[0], SY + r[1]]);
+        if (q) paper(id, q[0], q[1], r[2], r[3], fill, inner);
+      };
+      drop(10, 37, [14, 36, 372, 24], T.ultra, (w) => { text("Atelier Nomade", 10, 16, 11, 800, T["on-ultra"]); [0, 1, 2].forEach((i) => bar(w - 120 + i * 38, 10, 28, 4, T["on-ultra"])); });
+      drop(11, 41, [14, 72, 176, 50], T.surface, () => { text("Céramiques", 6, 22, 20, 800, T.ink); text("faites main", 6, 44, 20, 800, T.ink); });
+      drop(12, 45, [206, 72, 180, 112], T.pink, (w, h) => {
+        ctx.beginPath(); ctx.arc(140, 34, 16, 0, 7); ctx.fillStyle = T.sun; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(0, h); ctx.lineTo(62, 46); ctx.lineTo(118, h); ctx.closePath(); ctx.fillStyle = T.ultra; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(80, h); ctx.lineTo(134, 62); ctx.lineTo(w, h); ctx.closePath(); ctx.fillStyle = T.ink; ctx.fill();
+      });
+      drop(13, 49, [14, 126, 176, 24], T.surface, () => { bar(6, 6, 150, 4, T.muted); bar(6, 14, 110, 4, T.muted); });
+      [[14, 52, "Boutique"], [142, 55, "Ateliers"], [270, 58, "Commandes"]].forEach((c, i) => {
+        drop(14 + i, c[1], [c[0], 198, 116, 74], T.sky, () => { text(c[2], 10, 24, 13, 700, T.ink); bar(10, 36, 80, 4, T.muted); bar(10, 46, 60, 4, T.muted); });
+      });
+      const pressed = f >= 92 && f <= 93 ? 2 : 0;
+      drop(17, 61, [14, 156 + pressed, 96, 26], T.ink, () => text("Réserver", 18, 18, 12, 700, T.paper));
+
+      // 4. Going live: phone version + stamp
+      p = slide(65, 5, [900, 150], [642, 132]);
+      if (p) paper(20, p[0], p[1], 116, 220, T.surface, (w) => {
+        ctx.fillStyle = T.ink; ctx.fillRect(w / 2 - 16, 8, 32, 4);
+        bar(10, 20, w - 20, 14, T.ultra); bar(10, 40, w - 20, 54, T.pink);
+        bar(10, 100, 70, 6, T.ink); bar(10, 112, 86, 4, T.muted); bar(10, 120, 60, 4, T.muted);
+        bar(10, 132, 50, 14, T.ink); bar(10, 154, w - 20, 26, T.sky); bar(10, 184, w - 20, 26, T.sky);
+      }, { rot: 0.05 });
+      if (f >= 74) {
+        const sc = [1.9, 1.35, 1.08, 1][Math.min(3, f - 74)];
+        ctx.save();
+        ctx.translate(SX + 270 + (hash(90, f) - 0.5) * 1.2, SY + 250);
+        ctx.rotate(-0.22); ctx.scale(sc, sc);
+        ctx.globalAlpha = 0.92; ctx.strokeStyle = T.pink; ctx.lineWidth = 4;
+        ctx.strokeRect(-78, -24, 156, 48); ctx.strokeRect(-72, -18, 144, 36);
+        ctx.textAlign = "center"; text("EN LIGNE", 0, 9, 24, 900, T.pink); ctx.textAlign = "left";
+        ctx.restore();
+      }
+
+      // 5. Follow-up: cursor clicks the button, visits chart grows
+      p = slide(84, 8, [780, 470], [SX + 70, SY + 172]);
+      if (p) {
+        ctx.save(); ctx.translate(p[0] + (hash(95, f) - 0.5) * 1.5, p[1]);
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 30); ctx.lineTo(8, 23); ctx.lineTo(14, 35); ctx.lineTo(19, 32); ctx.lineTo(13, 21); ctx.lineTo(24, 21); ctx.closePath();
+        ctx.fillStyle = T.shadow; ctx.save(); ctx.translate(3, 3); ctx.fill(); ctx.restore();
+        ctx.fillStyle = T.surface; ctx.fill(); ctx.strokeStyle = T.ink; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+      }
+      if (f >= 92 && f <= 96) {
+        const r = 6 + (f - 92) * 7;
+        ctx.save(); ctx.strokeStyle = T.ultra; ctx.lineWidth = 3; ctx.globalAlpha = 1 - (f - 92) / 5;
+        ctx.beginPath(); ctx.arc(SX + 62, SY + 169, r, 0, 7); ctx.stroke(); ctx.restore();
+      }
+      p = slide(94, 4, [-170, 310], [32, 296]);
+      if (p) paper(31, p[0], p[1], 150, 130, T.surface, () => {
+        text("Visites", 12, 22, 13, 700, T.ink);
+        const hs = [22, 34, 30, 52, 70];
+        hs.forEach((hh, k) => {
+          const g = clamp((f - 97 - k) / 3, 0, 1);
+          bar(14 + k * 25, 116 - hh * g, 16, hh * g, k === 4 ? T.ultra : T.sky);
+        });
+        bar(10, 117, 130, 2, T.ink);
+      }, { rot: 0.04 });
+    }
+
+    function ui() {
+      const shown = Math.min(f, TOTAL - 1);
+      range.value = shown;
+      count.textContent = "Image " + (shown + 1) + " sur " + TOTAL;
+      let st = 0; STEP_AT.forEach((a, i) => { if (shown >= a) st = i; });
+      stepBtns.forEach((b, i) => { if (i === st) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current"); });
+    }
+    function render() { draw(); ui(); }
+    function setPlaying(v) {
+      playing = v;
+      playBtn.setAttribute("aria-label", v ? "Mettre en pause" : "Lire l'animation");
+      playBtn.innerHTML = v
+        ? '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5Z"/></svg>';
+      kick();
+    }
+    function loop(t) {
+      raf = 0;
+      if (!playing || !visible) return;
+      if (!last) last = t;
+      acc += t - last; last = t;
+      while (acc >= 1000 / FPS) {
+        acc -= 1000 / FPS; tick++;
+        if (tick >= TOTAL + HOLD) tick = 0;
+        f = Math.min(tick, TOTAL - 1);
+        render();
+      }
+      raf = requestAnimationFrame(loop);
+    }
+    function kick() { if (!raf && playing && visible) { last = 0; raf = requestAnimationFrame(loop); } }
+    function jump(frame) { f = tick = clamp(frame, 0, TOTAL - 1); acc = 0; render(); }
+
+    playBtn.addEventListener("click", () => {
+      if (!playing && f >= TOTAL - 1) jump(0);
+      setPlaying(!playing);
+    });
+    range.addEventListener("input", () => { jump(+range.value); });
+    stepBtns.forEach((b, i) => b.addEventListener("click", () => { jump(STEP_AT[i]); if (!reduceMotion) setPlaying(true); }));
+
+    function size() {
+      const w = screen.clientWidth, dpr = Math.min(devicePixelRatio || 1, 2);
+      cv.width = Math.round(w * dpr); cv.height = Math.round(w * (H / W) * dpr);
+      render();
+    }
+    new ResizeObserver(size).observe(screen);
+    new IntersectionObserver((e) => { visible = e[0].isIntersecting; kick(); }).observe(screen);
+    onTheme(render);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+    tick = f;
+    setPlaying(playing);
+    size();
+  }
+  initStopMotion();
+
+  /* ---------- Quote builder ---------- */
+  function initQuote() {
+    const form = $("#q-form");
+    const pages = $("#q-pages"), pagesOut = $("#q-pages-out"), hint = $("#q-pages-hint");
+    const totalEl = $("#q-total"), delayEl = $("#q-delay"), careEl = $("#q-care"), tree = $("#q-tree");
+    const TYPES = {
+      landing: { label: "Page unique", base: 490, incl: 1, weeks: 1, pages: ["Accueil"] },
+      portfolio: { label: "Portfolio", base: 690, incl: 3, weeks: 2, pages: ["Accueil", "Projets", "Contact"] },
+      vitrine: { label: "Site vitrine", base: 890, incl: 5, weeks: 3, pages: ["Accueil", "Services", "À propos", "Contact", "Mentions légales"] },
+      ecommerce: { label: "Boutique en ligne", base: 2490, incl: 8, weeks: 6, pages: ["Accueil", "Boutique", "Fiche produit", "Panier", "Paiement", "Mon compte", "Contact", "CGV"] },
+    };
+    const OPTS = {
+      blog: { label: "Blog", price: 350, weeks: 0.5 },
+      booking: { label: "Réservation en ligne", price: 390, weeks: 0.5 },
+      lang: { label: "Version anglaise", price: 450, weeks: 1 },
+      logo: { label: "Logo et couleurs", price: 290, weeks: 1 },
+      copy: { label: "Rédaction des textes", price: 0, perPage: 60, weeks: 0.5 },
+      seo: { label: "Référencement local", price: 250, weeks: 0 },
+      anim: { label: "Animations et 3D", price: 600, weeks: 1 },
+    };
+    let shown = 890, tween = 0, prevKeys = new Set(), lastType = "vitrine";
+    let summary = "";
+
+    function animateTo(target) {
+      cancelAnimationFrame(tween);
+      if (reduceMotion) { shown = target; totalEl.textContent = euros(target); return; }
+      const from = shown, t0 = performance.now();
+      const step = (t) => {
+        const p = Math.min(1, (t - t0) / 420), e = 1 - Math.pow(1 - p, 3);
+        shown = from + (target - from) * e;
+        totalEl.textContent = euros(shown);
+        if (p < 1) tween = requestAnimationFrame(step);
+      };
+      tween = requestAnimationFrame(step);
+    }
+
+    function update() {
+      const typeKey = form.querySelector('input[name="type"]:checked').value;
+      const type = TYPES[typeKey];
+      if (typeKey !== lastType) { pages.value = type.incl; lastType = typeKey; }
+      const n = +pages.value;
+      pagesOut.textContent = n;
+      hint.textContent = type.incl === 1
+        ? "1 page incluse, puis 90 € par page supplémentaire."
+        : type.incl + " pages incluses, puis 90 € par page supplémentaire.";
+      const opts = $$('input[name="opt"]:checked', form).map((i) => i.value);
+      const fast = form.querySelector('input[name="speed"]:checked').value === "fast";
+      const care = $("#o-care").checked;
+
+      let price = type.base + Math.max(0, n - type.incl) * 90;
+      let weeks = type.weeks + Math.max(0, n - type.incl) * 0.2;
+      opts.forEach((k) => { const o = OPTS[k]; price += o.price + (o.perPage ? o.perPage * n : 0); weeks += o.weeks; });
+      if (fast) { price *= 1.25; weeks *= 0.6; }
+      price = Math.round(price / 10) * 10;
+      weeks = Math.max(1, Math.round(weeks));
+      animateTo(price);
+      delayEl.textContent = weeks + (weeks > 1 ? " semaines" : " semaine");
+      careEl.textContent = care ? "49 € / mois" : "Non incluse";
+
+      const names = type.pages.slice(1, Math.max(1, Math.min(n, type.pages.length)));
+      for (let i = type.pages.length + 1; i <= n; i++) names.push("Page " + i);
+      const nodes = names.map((nm) => ({ key: "p:" + nm, label: nm, opt: false }));
+      if (opts.includes("blog")) nodes.push({ key: "o:blog", label: "Blog", opt: true });
+      if (opts.includes("booking")) nodes.push({ key: "o:booking", label: "Réservation", opt: true });
+      if (opts.includes("lang")) nodes.push({ key: "o:lang", label: "Version EN", opt: true });
+      const keys = new Set(nodes.map((x) => x.key));
+      tree.textContent = "";
+      if (!nodes.length) {
+        const empty = document.createElement("span");
+        empty.className = "node"; empty.textContent = "Tout tient sur une seule page";
+        tree.appendChild(empty);
+      }
+      nodes.forEach((x) => {
+        const el = document.createElement("span");
+        el.className = "node" + (x.opt ? " node--opt" : "") + (prevKeys.size && !prevKeys.has(x.key) ? " is-new" : "");
+        el.textContent = x.label;
+        tree.appendChild(el);
+      });
+      prevKeys = keys;
+
+      const optLabels = opts.map((k) => OPTS[k].label);
+      summary = "Estimation cn-web : " + type.label + ", " + n + (n > 1 ? " pages" : " page")
+        + (optLabels.length ? ", options : " + optLabels.join(", ") : "")
+        + (fast ? ", délai express" : "") + (care ? ", avec maintenance (49 € HT / mois)" : "")
+        + ". Prix estimé : " + euros(price) + " HT, environ " + delayEl.textContent + ".";
+    }
+    form.addEventListener("input", update);
+    form.addEventListener("change", update);
+    update();
+
+    $$("[data-pick]").forEach((b) => b.addEventListener("click", () => {
+      const r = document.getElementById("t-" + b.dataset.pick);
+      r.checked = true; update();
+      $("#devis").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+    }));
+    $(".care a").addEventListener("click", () => { $("#o-care").checked = true; update(); });
+    $("#q-use").addEventListener("click", () => {
+      const msg = $("#c-msg");
+      msg.value = summary + "\n\nMon activité : ";
+      const typeLabel = TYPES[lastType].label;
+      $$("#c-type option").forEach((o) => { if (o.value === typeLabel) o.selected = true; });
+      $("#contact").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+      setTimeout(() => { $("#c-name").focus({ preventScroll: true }); }, reduceMotion ? 0 : 600);
+    });
+  }
+  initQuote();
+
+  /* ---------- Responsive demo ---------- */
+  function initResponsive() {
+    const stage = $("#rs-stage"), frame = $("#rs-frame"), handle = $("#rs-handle"), range = $("#rs-range"), out = $("#rs-out");
+    let width = 1200;
+    function maxW() { return Math.max(300, stage.clientWidth - 58); }
+    function label(w) { return w < 600 ? "téléphone" : w < 960 ? "tablette" : "ordinateur"; }
+    function set(w) {
+      const m = maxW();
+      width = clamp(Math.round(w), 300, m);
+      frame.style.setProperty("--w", width + "px");
+      range.max = m; range.value = width;
+      out.textContent = width + " px, " + label(width);
+      $$('input[name="dev"]').forEach((r) => { r.checked = label(+r.value) === label(width) && Math.abs(+r.value - width) < 40; });
+    }
+    let drag = null;
+    handle.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, w: width }; handle.setPointerCapture(e.pointerId); });
+    handle.addEventListener("pointermove", (e) => { if (drag) set(drag.w + (e.clientX - drag.x)); });
+    const stop = () => { drag = null; };
+    handle.addEventListener("pointerup", stop);
+    handle.addEventListener("pointercancel", stop);
+    handle.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") { set(width - 20); e.preventDefault(); }
+      if (e.key === "ArrowRight") { set(width + 20); e.preventDefault(); }
+    });
+    range.addEventListener("input", () => set(+range.value));
+    $$('input[name="dev"]').forEach((r) => r.addEventListener("change", () => {
+      const target = +r.value;
+      if (reduceMotion) return set(target);
+      const from = width, t0 = performance.now();
+      const step = (t) => {
+        const p = Math.min(1, (t - t0) / 500), e = 1 - Math.pow(1 - p, 3);
+        set(from + (Math.min(target, maxW()) - from) * e);
+        if (p < 1) requestAnimationFrame(step);
+        else r.checked = true;
+      };
+      requestAnimationFrame(step);
+    }));
+    new ResizeObserver(() => set(width)).observe(stage);
+    set(width);
+  }
+  initResponsive();
+
+  /* ---------- Tilt cards ---------- */
+  if (finePointer && !reduceMotion) {
+    $$(".demo-card").forEach((card) => {
+      card.addEventListener("pointermove", (e) => {
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+        card.classList.add("is-tilting");
+        card.style.setProperty("--ry", ((x - 0.5) * 16).toFixed(2) + "deg");
+        card.style.setProperty("--rx", ((0.5 - y) * 14).toFixed(2) + "deg");
+        card.style.setProperty("--gx", (x * 100).toFixed(1) + "%");
+        card.style.setProperty("--gy", (y * 100).toFixed(1) + "%");
+      });
+      card.addEventListener("pointerleave", () => {
+        card.classList.remove("is-tilting");
+        card.style.setProperty("--rx", "0deg"); card.style.setProperty("--ry", "0deg");
+      });
+    });
+  }
+
+  /* ---------- Lighthouse gauges ---------- */
+  const C = 2 * Math.PI * 42;
+  const gauges = $$(".gauge").map((g) => {
+    const fg = $(".g-fg", g), val = $("b", g), v = +g.dataset.v;
+    fg.style.strokeDasharray = C.toFixed(2);
+    fg.style.strokeDashoffset = (C * (1 - v / 100)).toFixed(2);
+    return { fg, val, v };
+  });
+  $("#audit-btn").addEventListener("click", () => {
+    const t0 = performance.now(), dur = reduceMotion ? 0 : 1400;
+    const step = (t) => {
+      const p = dur ? Math.min(1, (t - t0) / dur) : 1, e = 1 - Math.pow(1 - p, 3);
+      gauges.forEach((g, i) => {
+        const q = clamp(e * 1.15 - i * 0.05, 0, 1), cur = g.v * q;
+        g.fg.style.strokeDashoffset = (C * (1 - cur / 100)).toFixed(2);
+        g.val.textContent = Math.round(cur);
+      });
+      if (p < 1) requestAnimationFrame(step);
+      else gauges.forEach((g) => { g.fg.style.strokeDashoffset = (C * (1 - g.v / 100)).toFixed(2); g.val.textContent = g.v; });
+    };
+    requestAnimationFrame(step);
+  });
+
+  /* ---------- Contact ---------- */
+  const copyBtn = $("#copy-mail"), mail = $("#mail");
+  copyBtn.addEventListener("click", () => {
+    const done = () => { copyBtn.textContent = "Adresse copiée"; setTimeout(() => { copyBtn.textContent = "Copier l'adresse"; }, 2000); };
+    const fallback = () => { mail.focus(); mail.select(); copyBtn.textContent = "Sélectionnée, faites Ctrl+C"; };
+    try { navigator.clipboard.writeText(mail.value).then(done, fallback); } catch (e) { fallback(); }
+  });
+  const cForm = $("#c-form"), cErr = $("#c-err"), cStatus = $("#c-status");
+  cForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = $("#c-name").value.trim(), email = $("#c-email").value.trim(), msg = $("#c-msg").value.trim();
+    const missing = [];
+    if (!name) missing.push("votre nom");
+    if (!/^\S+@\S+\.\S+$/.test(email)) missing.push("une adresse e-mail valide");
+    if (!msg) missing.push("un message");
+    if (missing.length) {
+      cErr.hidden = false; cStatus.hidden = true;
+      cErr.textContent = "Il manque " + missing.join(", ") + ".";
+      return;
+    }
+    cErr.hidden = true; cStatus.hidden = false;
+    cStatus.textContent = "Merci " + name + ". Ce formulaire de démonstration n'est pas encore relié à une boîte mail, donc rien n'a été envoyé. Écrivez directement à contact@cn-web.fr en reprenant votre message.";
+  });
+})();
+</script>
