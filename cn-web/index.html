@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>cn-web</title>
 <meta name="description" content="cn-web conçoit, code et met en ligne des sites vitrines et des boutiques en ligne pour les indépendants, artisans et petites entreprises.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E %3Cg stroke='#14143C' stroke-width='2.5' stroke-linejoin='round'%3E %3Crect x='5' y='20' width='38' height='38' rx='8' fill='#FFD84D' transform='rotate%28-12 24 39%29'/%3E %3Crect x='12.5' y='12.5' width='38' height='38' rx='8' fill='#FF6FB5' transform='rotate%28-5 31.5 31.5%29'/%3E %3Cpath d='M29 4H47L59 16V34A8 8 0 0 1 51 42H29A8 8 0 0 1 21 34V12A8 8 0 0 1 29 4Z' fill='#3B2BFF'/%3E %3Cpath d='M47 4V16H59Z' fill='#DCD8FF'/%3E %3C/g%3E %3Cg fill='none' stroke='#FFFFFF' stroke-width='4.4' stroke-linecap='round'%3E %3Cpath d='M38.1 23.14A6 6 0 1 0 38.1 30.86'/%3E %3Cpath d='M43 33V26A5 5 0 0 1 53 26V33'/%3E %3C/g%3E %3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
@@ -25,6 +26,12 @@
   --mat-line: #B9D5C5;
   --shadow: rgba(20, 20, 60, .2);
   --ok: #138A52;
+  /* logo colours stay the same in both themes */
+  --brand-ultra: #3B2BFF;
+  --brand-pink: #FF6FB5;
+  --brand-sun: #FFD84D;
+  --brand-ink: #14143C;
+  --brand-flap: #DCD8FF;
 
   --font: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --step--1: .875rem;
@@ -102,11 +109,38 @@ a { color: inherit; }
   border-bottom: 1px solid var(--line);
 }
 .top-in { display: flex; align-items: center; gap: 24px; min-height: 68px; }
-.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 800; font-size: 1.25rem; font-variation-settings: "wdth" 90; }
-.brand-mark {
-  display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 9px;
-  background: var(--ultra); color: var(--on-ultra); font-size: .95rem; font-variation-settings: "wdth" 70; transform: rotate(-6deg);
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.logo-mark { width: 42px; height: 42px; flex: none; overflow: visible; }
+.logo-mark .lg {
+  transform-box: fill-box; transform-origin: center;
+  stroke: var(--brand-ink); stroke-width: 2.5; stroke-linejoin: round;
+  transition: transform .4s cubic-bezier(.3, 1.6, .5, 1);
+  animation: lgdrop .52s steps(4, end) backwards;
 }
+.logo-mark .lg-mid { animation-delay: .12s; }
+.logo-mark .lg-front { animation-delay: .24s; }
+@keyframes lgdrop { from { transform: translateY(-40px) rotate(-25deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.lg-back rect { fill: var(--brand-sun); }
+.lg-mid rect { fill: var(--brand-pink); }
+.lg-sheet { fill: var(--brand-ultra); }
+.lg-flap { fill: var(--brand-flap); transform-box: fill-box; transform-origin: 0 100%; transition: transform .4s cubic-bezier(.3, 1.6, .5, 1); }
+.lg-letter { fill: none; stroke: #FFFFFF; stroke-width: 4.4; stroke-linecap: round; }
+.brand:hover .lg-back { transform: translate(-6px, 6px) rotate(-10deg); }
+.brand:hover .lg-mid { transform: translate(-3px, 3px) rotate(-4deg); }
+.brand:hover .lg-front { transform: translate(3px, -3px) rotate(4deg); }
+.brand:hover .lg-flap { transform: scale(1.35); }
+.wordmark {
+  display: inline-flex; align-items: baseline; font-size: 1.65rem; line-height: 1; font-weight: 800;
+  font-variation-settings: "wdth" 72, "wght" 800; letter-spacing: -.01em;
+}
+.hy {
+  display: inline-block; width: .32em; height: .15em; margin-inline: .07em;
+  background: var(--brand-pink); border: 1.5px solid var(--brand-ink); border-radius: 2px;
+  transform: translateY(-.3em) rotate(-9deg); transition: transform .35s cubic-bezier(.3, 1.6, .5, 1);
+}
+.brand:hover .hy { transform: translateY(-.3em) rotate(12deg) scaleX(1.25); }
+.brand--lg .logo-mark { width: 64px; height: 64px; }
+.brand--lg .wordmark { font-size: 2.4rem; }
 .nav { display: flex; gap: 22px; margin-left: auto; }
 .nav a { text-decoration: none; color: var(--muted); font-weight: 550; }
 .nav a:hover { color: var(--ink); }
@@ -233,7 +267,7 @@ a { color: inherit; }
 .offer li { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; }
 .offer li svg { width: 18px; height: 18px; margin-top: 3px; color: var(--ultra); }
 .offer .btn { margin-top: auto; align-self: flex-start; }
-.offer--main { background: var(--ultra); color: var(--on-ultra); border-color: var(--ultra); transform: rotate(-1.2deg); }
+.offer--main { background: var(--ultra); color: var(--on-ultra); border-color: var(--ultra); --rz: -1.2deg; }
 .offer--main .price small, .offer--main p { color: inherit; opacity: .85; }
 .offer--main li svg { color: var(--sun); }
 .offer--main .btn { background: var(--on-ultra); color: var(--ultra); border-color: var(--on-ultra); }
@@ -246,7 +280,7 @@ a { color: inherit; }
 .care p { color: var(--muted); max-width: 62ch; }
 .care strong { color: var(--ink); }
 .care .price b { font-size: var(--step-2); font-weight: 800; font-variation-settings: "wdth" 72; }
-@media (max-width: 900px) { .offers { grid-template-columns: minmax(0, 1fr); } .offer--main { transform: none; } }
+@media (max-width: 900px) { .offers { grid-template-columns: minmax(0, 1fr); } .offer--main { --rz: 0deg; } }
 
 /* Quote builder */
 .quote { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(24px, 4vw, 48px); align-items: start; }
@@ -350,19 +384,23 @@ a { color: inherit; }
 /* Example styles */
 .demos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
 .demo { display: grid; gap: 14px; margin: 0; align-content: start; }
-.demo-card {
-  --rx: 0deg; --ry: 0deg; --gx: 50%; --gy: 50%;
-  position: relative; aspect-ratio: 4 / 5; border-radius: 18px; overflow: hidden;
-  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
-  transform-style: preserve-3d; transition: transform .25s ease-out; border: 2px solid var(--ink);
+.tilt {
+  --rx: 0deg; --ry: 0deg; --rz: 0deg;
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) rotate(var(--rz));
+  transform-style: preserve-3d; transition: transform .3s ease-out;
 }
-.demo-card.is-tilting { transition: none; }
+.tilt.is-tilting { transition: transform .08s linear; }
+.demo-card {
+  --gx: 50%; --gy: 50%;
+  position: relative; aspect-ratio: 4 / 5; border-radius: 18px; overflow: hidden; border: 2px solid var(--ink);
+}
 .demo-card::after {
   content: ""; position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(circle at var(--gx) var(--gy), rgba(255, 255, 255, .35), transparent 45%);
   opacity: 0; transition: opacity .25s ease;
 }
 .demo-card:hover::after { opacity: 1; }
+.offer { will-change: transform; }
 .demo-in { position: absolute; inset: 0; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
 .demo-in > * { transform: translateZ(30px); }
 .demo figcaption { display: grid; gap: 2px; }
@@ -426,6 +464,28 @@ a { color: inherit; }
 .faq details[open] summary::after { transform: rotate(45deg); background: var(--pink); color: #14143C; }
 .faq details p { padding: 0 20px 20px; color: var(--muted); max-width: 66ch; }
 
+/* 3D logo band */
+.sec--ink { background: var(--ink); color: var(--paper); }
+.sec--ink .btn--ghost { color: var(--paper); border-color: var(--paper); }
+.pile { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: center; }
+.pile-text { display: grid; gap: 22px; }
+.pile-text h2 { margin: 0; font-size: var(--step-3); line-height: .98; font-weight: 800; font-variation-settings: "wdth" 78, "wght" 800; max-width: 14ch; }
+.pile-text p { opacity: .8; max-width: 46ch; }
+.pile-view { position: relative; width: 100%; aspect-ratio: 1 / 1; max-height: 520px; cursor: pointer; touch-action: pan-y; }
+.pile-view::before {
+  content: ""; position: absolute; left: 18%; right: 18%; bottom: 6%; height: 10%; border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--paper) 22%, transparent), transparent);
+}
+.pile-view canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.pile-fallback { display: none; position: absolute; inset: 20%; width: 60%; height: 60%; overflow: visible; }
+.pile-view.is-static canvas { display: none; }
+.pile-view.is-static .pile-fallback { display: block; }
+.pile-fallback .lg { stroke: var(--brand-ink); stroke-width: 2.5; stroke-linejoin: round; }
+@media (max-width: 860px) { .pile { grid-template-columns: minmax(0, 1fr); } .pile-view { max-height: 400px; } }
+
+/* Click burst */
+.fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
+
 /* Contact */
 .contact { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(24px, 4vw, 56px); align-items: start; }
 .contact .sec-head { margin-bottom: 24px; }
@@ -447,15 +507,23 @@ a { color: inherit; }
 @media (max-width: 520px) { .c-row { grid-template-columns: minmax(0, 1fr); } }
 
 /* Footer */
-.foot { padding-block: 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: var(--step--1); }
-.foot-in { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; align-items: center; }
-.foot .brand { color: var(--ink); }
+.foot { padding-block: clamp(48px, 7vw, 80px) 28px; border-top: 1px solid var(--line); color: var(--muted); }
+.foot-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 32px 48px; }
+.foot-brand { display: grid; gap: 18px; align-content: start; }
+.foot-brand p { max-width: 42ch; }
+.foot-col { display: grid; gap: 8px; align-content: start; }
+.foot-col h3 { margin: 0 0 6px; font-size: var(--step-0); color: var(--ink); font-variation-settings: "wdth" 90; }
+.foot-col a { text-decoration: none; }
+.foot-col a:hover { color: var(--ink); text-decoration: underline; }
+.foot-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); font-size: var(--step--1); }
+@media (max-width: 760px) { .foot-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .foot-brand { grid-column: 1 / -1; } }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .ch, .node.is-new { animation: none; }
   .ch { transition: none; }
-  .btn, .demo-card { transition: none; }
+  .btn, .tilt { transition: none; }
+  .logo-mark .lg { animation: none; }
 }
 </style>
 </head>
@@ -465,7 +533,19 @@ a { color: inherit; }
 
 <header class="top">
   <div class="wrap top-in">
-    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">cn</span><span>cn-web</span></a>
+    <a class="brand" href="#top" aria-label="cn-web, retour en haut de page">
+      <svg class="logo-mark" viewBox="0 0 64 64" aria-hidden="true">
+        <g class="lg lg-back"><rect x="5" y="20" width="38" height="38" rx="8" transform="rotate(-12 24 39)"/></g>
+        <g class="lg lg-mid"><rect x="12.5" y="12.5" width="38" height="38" rx="8" transform="rotate(-5 31.5 31.5)"/></g>
+        <g class="lg lg-front">
+          <path class="lg-sheet" d="M29 4H47L59 16V34A8 8 0 0 1 51 42H29A8 8 0 0 1 21 34V12A8 8 0 0 1 29 4Z"/>
+          <path class="lg-flap" d="M47 4V16H59Z"/>
+          <path class="lg-letter" d="M38.1 23.14A6 6 0 1 0 38.1 30.86"/>
+          <path class="lg-letter" d="M43 33V26A5 5 0 0 1 53 26V33"/>
+        </g>
+      </svg>
+      <span class="wordmark" aria-hidden="true">cn<span class="hy"></span>web</span>
+    </a>
     <nav class="nav" aria-label="Navigation principale">
       <a href="#methode">Méthode</a>
       <a href="#offres">Offres</a>
@@ -556,7 +636,7 @@ a { color: inherit; }
         <p>Les prix sont hors taxes et comprennent le design, le développement, la mise en ligne et une formation d'une heure pour gérer votre site.</p>
       </div>
       <div class="offers">
-        <article class="offer">
+        <article class="offer tilt" data-tilt="6">
           <h3>Page unique</h3>
           <div class="price"><b>490 €</b><small>HT</small></div>
           <p>Pour présenter une offre, un événement ou une activité qui démarre.</p>
@@ -567,7 +647,7 @@ a { color: inherit; }
           </ul>
           <button class="btn btn--ghost" type="button" data-pick="landing">Choisir la page unique</button>
         </article>
-        <article class="offer offer--main">
+        <article class="offer offer--main tilt" data-tilt="6">
           <span class="tag">Le plus demandé</span>
           <h3>Site vitrine</h3>
           <div class="price"><b>890 €</b><small>HT</small></div>
@@ -580,7 +660,7 @@ a { color: inherit; }
           </ul>
           <button class="btn" type="button" data-pick="vitrine">Choisir le site vitrine</button>
         </article>
-        <article class="offer">
+        <article class="offer tilt" data-tilt="6">
           <h3>Boutique en ligne</h3>
           <div class="price"><b>2 490 €</b><small>HT</small></div>
           <p>Pour vendre vos produits en ligne et encaisser les paiements par carte.</p>
@@ -721,7 +801,7 @@ a { color: inherit; }
       </div>
       <div class="demos">
         <figure class="demo">
-          <div class="demo-card d1">
+          <div class="demo-card tilt d1" data-tilt="16">
             <div class="demo-in">
               <div class="d-nav"><b>Boulangerie Lune</b><span>Commander</span></div>
               <div class="d-bread"></div>
@@ -732,7 +812,7 @@ a { color: inherit; }
           <figcaption><b>Boulangerie</b><span>Maquette de démonstration. Chaleureux, typographie à empattements.</span></figcaption>
         </figure>
         <figure class="demo">
-          <div class="demo-card d2">
+          <div class="demo-card tilt d2" data-tilt="16">
             <div class="demo-in">
               <div class="d-stripe"></div>
               <h4>Garage Ferrand</h4>
@@ -744,7 +824,7 @@ a { color: inherit; }
           <figcaption><b>Garage automobile</b><span>Maquette de démonstration. Contrasté, lisible au premier coup d'œil.</span></figcaption>
         </figure>
         <figure class="demo">
-          <div class="demo-card d3">
+          <div class="demo-card tilt d3" data-tilt="16">
             <div class="demo-in">
               <div class="d-nav"><b>Studio Respire</b><span>Planning</span></div>
               <div class="d-sun"></div>
@@ -796,6 +876,27 @@ a { color: inherit; }
     </div>
   </section>
 
+  <section class="sec sec--ink" id="pile">
+    <div class="wrap pile">
+      <div class="pile-text">
+        <h2>Le prochain site de la pile, c'est le vôtre</h2>
+        <p>Chaque feuille du logo cn-web est un site livré. Cliquez sur la pile pour la faire sauter, puis parlez-nous de votre projet.</p>
+        <div class="cta-row">
+          <a class="btn" href="#devis">Estimer mon site</a>
+          <a class="btn btn--ghost" href="#contact">Écrire à cn-web</a>
+        </div>
+      </div>
+      <div class="pile-view" id="logo3d">
+        <canvas role="img" aria-label="Le logo cn-web en 3D : trois feuilles de papier empilées, la feuille du dessus porte les lettres c et n"></canvas>
+        <svg class="pile-fallback" viewBox="0 0 64 64" aria-hidden="true">
+          <g class="lg lg-back"><rect x="5" y="20" width="38" height="38" rx="8" transform="rotate(-12 24 39)"/></g>
+          <g class="lg lg-mid"><rect x="12.5" y="12.5" width="38" height="38" rx="8" transform="rotate(-5 31.5 31.5)"/></g>
+          <g class="lg lg-front"><path class="lg-sheet" d="M29 4H47L59 16V34A8 8 0 0 1 51 42H29A8 8 0 0 1 21 34V12A8 8 0 0 1 29 4Z"/><path class="lg-flap" d="M47 4V16H59Z"/><path class="lg-letter" d="M38.1 23.14A6 6 0 1 0 38.1 30.86"/><path class="lg-letter" d="M43 33V26A5 5 0 0 1 53 26V33"/></g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
   <section class="sec" id="contact">
     <div class="wrap contact">
       <div>
@@ -834,9 +935,43 @@ a { color: inherit; }
 </main>
 
 <footer class="foot">
-  <div class="wrap foot-in">
-    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">cn</span><span>cn-web</span></a>
-    <span>Création de sites web sur mesure. © 2026 cn-web.</span>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand brand--lg" href="#top" aria-label="cn-web, retour en haut de page">
+          <svg class="logo-mark" viewBox="0 0 64 64" aria-hidden="true">
+          <g class="lg lg-back"><rect x="5" y="20" width="38" height="38" rx="8" transform="rotate(-12 24 39)"/></g>
+          <g class="lg lg-mid"><rect x="12.5" y="12.5" width="38" height="38" rx="8" transform="rotate(-5 31.5 31.5)"/></g>
+          <g class="lg lg-front">
+            <path class="lg-sheet" d="M29 4H47L59 16V34A8 8 0 0 1 51 42H29A8 8 0 0 1 21 34V12A8 8 0 0 1 29 4Z"/>
+            <path class="lg-flap" d="M47 4V16H59Z"/>
+            <path class="lg-letter" d="M38.1 23.14A6 6 0 1 0 38.1 30.86"/>
+            <path class="lg-letter" d="M43 33V26A5 5 0 0 1 53 26V33"/>
+          </g>
+        </svg>
+          <span class="wordmark" aria-hidden="true">cn<span class="hy"></span>web</span>
+        </a>
+        <p>Sites vitrines et boutiques en ligne, conçus et codés sur mesure pour les indépendants, les artisans et les petites entreprises.</p>
+      </div>
+      <nav class="foot-col" aria-label="Plan du site">
+        <h3>Le site</h3>
+        <a href="#methode">Méthode</a>
+        <a href="#offres">Offres</a>
+        <a href="#devis">Estimation</a>
+        <a href="#exemples">Exemples</a>
+        <a href="#faq">Questions</a>
+      </nav>
+      <div class="foot-col">
+        <h3>Contact</h3>
+        <a href="#contact">contact@cn-web.fr</a>
+        <span>Réponse sous 24 heures ouvrées</span>
+        <span>Rendez-vous en visio ou par téléphone</span>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 cn-web</span>
+      <span>Fait à la main, image par image.</span>
+    </div>
   </div>
 </footer>
 
@@ -1037,7 +1172,16 @@ a { color: inherit; }
       cubes.push(m);
     }
 
+    let floor = null;
+    function paintFloor() {
+      if (floor) { group.remove(floor); floor.geometry.dispose(); floor.material.dispose(); }
+      floor = new THREE.GridHelper(7, 14, color(T.ultra), color(T.muted));
+      floor.material.transparent = true; floor.material.opacity = 0.2;
+      floor.position.y = -PH / 2 - 0.55;
+      group.add(floor);
+    }
     function paintAll() {
+      paintFloor();
       layers.forEach((L) => {
         const ctx = L.c.getContext("2d");
         ctx.clearRect(0, 0, CW, CH);
@@ -1515,13 +1659,14 @@ a { color: inherit; }
 
   /* ---------- Tilt cards ---------- */
   if (finePointer && !reduceMotion) {
-    $$(".demo-card").forEach((card) => {
+    $$(".tilt").forEach((card) => {
+      const max = +card.dataset.tilt || 10;
       card.addEventListener("pointermove", (e) => {
         const r = card.getBoundingClientRect();
         const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
         card.classList.add("is-tilting");
-        card.style.setProperty("--ry", ((x - 0.5) * 16).toFixed(2) + "deg");
-        card.style.setProperty("--rx", ((0.5 - y) * 14).toFixed(2) + "deg");
+        card.style.setProperty("--ry", ((x - 0.5) * max).toFixed(2) + "deg");
+        card.style.setProperty("--rx", ((0.5 - y) * max * 0.85).toFixed(2) + "deg");
         card.style.setProperty("--gx", (x * 100).toFixed(1) + "%");
         card.style.setProperty("--gy", (y * 100).toFixed(1) + "%");
       });
@@ -1554,6 +1699,192 @@ a { color: inherit; }
     };
     requestAnimationFrame(step);
   });
+
+  /* ---------- 3D logo: the cn-web paper stack ---------- */
+  function initLogo3D() {
+    const view = $("#logo3d"), canvas = $("canvas", view);
+    if (!window.THREE) { view.classList.add("is-static"); return; }
+    let renderer;
+    try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true }); }
+    catch (e) { view.classList.add("is-static"); return; }
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+    camera.position.set(0, 0, 16.5);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.62));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.72); keyLight.position.set(4, 6, 8); scene.add(keyLight);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.3); rimLight.position.set(-6, -3, 4); scene.add(rimLight);
+
+    const root = new THREE.Group(); scene.add(root);
+    const stack = new THREE.Group(); stack.position.set(0.8, 0.75, 0); root.add(stack);
+    const S = 3.8, R = 0.8, H = S / 2;
+    function sheetShape(cut) {
+      const s = new THREE.Shape();
+      s.moveTo(-H + R, H);
+      if (cut) { s.lineTo(H - cut, H); s.lineTo(H, H - cut); }
+      else { s.lineTo(H - R, H); s.quadraticCurveTo(H, H, H, H - R); }
+      s.lineTo(H, -H + R); s.quadraticCurveTo(H, -H, H - R, -H);
+      s.lineTo(-H + R, -H); s.quadraticCurveTo(-H, -H, -H, -H + R);
+      s.lineTo(-H, H - R); s.quadraticCurveTo(-H, H, -H + R, H);
+      return s;
+    }
+    const DEPTH = 0.22;
+    const ext = { depth: DEPTH, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.04, bevelSegments: 2, curveSegments: 10 };
+    const mat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.55, metalness: 0 });
+    function slab(shape, c) {
+      const g = new THREE.ExtrudeGeometry(shape, ext); g.translate(0, 0, -DEPTH / 2);
+      return new THREE.Mesh(g, mat(c));
+    }
+    const BRAND = { ultra: 0x3B2BFF, pink: 0xFF6FB5, sun: 0xFFD84D, flap: 0xDCD8FF };
+    const back = new THREE.Group(); back.add(slab(sheetShape(0), BRAND.sun)); back.position.set(-1.6, -1.6, 0); back.rotation.z = 12 * Math.PI / 180;
+    const mid = new THREE.Group(); mid.add(slab(sheetShape(0), BRAND.pink)); mid.position.set(-0.85, -0.85, 0); mid.rotation.z = 5 * Math.PI / 180;
+    const front = new THREE.Group(); front.add(slab(sheetShape(1.2), BRAND.ultra));
+    const flapShape = new THREE.Shape(); flapShape.moveTo(0.7, 1.9); flapShape.lineTo(1.9, 0.7); flapShape.lineTo(0.7, 0.7); flapShape.closePath();
+    const flap = new THREE.Mesh(new THREE.ExtrudeGeometry(flapShape, { depth: 0.06, bevelEnabled: false }), mat(BRAND.flap));
+    flap.position.z = DEPTH / 2 + 0.04;
+    front.add(flap);
+    const white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, metalness: 0 });
+    function stroke(points) {
+      const g = new THREE.Group();
+      const curve = new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(p[0], p[1], 0)), false, "centripetal");
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 90, 0.22, 16, false), white));
+      [points[0], points[points.length - 1]].forEach((p) => {
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.22, 18, 12), white);
+        cap.position.set(p[0], p[1], 0); g.add(cap);
+      });
+      return g;
+    }
+    const arc = (cx, cy, r, a0, a1, n) => Array.from({ length: n + 1 }, (_, i) => {
+      const a = (a0 + (a1 - a0) * i / n) * Math.PI / 180; return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+    });
+    const line = (x, y0, y1, n) => Array.from({ length: n + 1 }, (_, i) => [x, y0 + (y1 - y0) * i / n]);
+    const letters = new THREE.Group();
+    letters.add(stroke(arc(-0.65, -0.4, 0.6, 40, 320, 40)));
+    letters.add(stroke([...line(0.3, -1.0, -0.3, 6).slice(0, -1), ...arc(0.8, -0.3, 0.5, 180, 0, 24), ...line(1.3, -0.3, -1.0, 6).slice(1)]));
+    stack.add(back, mid, front, letters);
+
+    function resize() {
+      const w = view.clientWidth, h = view.clientHeight;
+      if (!w || !h) return;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h; camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(view);
+    resize();
+
+    const BRX = -0.32, BRY = 0.42;
+    let ex = 0.25, exT = 0.25, pulse = 0, spin = 0, spinV = 0;
+    let rx = BRX, ry = BRY, trx = BRX, tryy = BRY;
+    view.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") { exT = 1; kick(); } });
+    view.addEventListener("pointerleave", () => { exT = 0.25; trx = BRX; tryy = BRY; kick(); });
+    view.addEventListener("pointermove", (e) => {
+      if (e.pointerType !== "mouse") return;
+      const r = view.getBoundingClientRect();
+      tryy = BRY + ((e.clientX - r.left) / r.width - 0.5) * 1.1;
+      trx = BRX + ((e.clientY - r.top) / r.height - 0.5) * 0.7;
+      kick();
+    });
+    view.addEventListener("click", () => {
+      pulse = 1;
+      if (!reduceMotion) spinV += 0.32;
+      kick();
+    });
+
+    let visible = false, raf = 0, lastT = 0;
+    function frame(t) {
+      raf = 0;
+      const dt = Math.min(3, lastT ? (t - lastT) / 16.67 : 1); lastT = t;
+      const k = 1 - Math.pow(0.9, dt);
+      pulse *= Math.pow(0.93, dt);
+      ex += (exT + pulse * 1.6 - ex) * k;
+      spin += spinV * dt; spinV *= Math.pow(0.94, dt);
+      if (spinV < 0.002) { const target = Math.round(spin / (Math.PI * 2)) * Math.PI * 2; spin += (target - spin) * k * 0.6; }
+      rx += (trx - rx) * k; ry += (tryy - ry) * k;
+      const sway = reduceMotion ? 0 : Math.sin(t * 0.0006) * 0.12;
+      root.rotation.set(rx + (reduceMotion ? 0 : Math.sin(t * 0.0009) * 0.04), ry + sway + spin, 0);
+      back.position.set(-1.6 - ex * 0.5, -1.6 - ex * 0.5, -0.55 - ex * 1.7);
+      mid.position.set(-0.85 - ex * 0.25, -0.85 - ex * 0.25, -0.28 - ex * 0.85);
+      back.rotation.z = (12 + ex * 8) * Math.PI / 180;
+      mid.rotation.z = (5 + ex * 3) * Math.PI / 180;
+      letters.position.z = DEPTH / 2 + 0.26 + ex * 0.45;
+      renderer.render(scene, camera);
+      const busy = Math.abs(exT + pulse * 1.6 - ex) > 0.002 || spinV > 0.001 || Math.abs(trx - rx) > 0.001 || Math.abs(tryy - ry) > 0.001;
+      if (visible && (!reduceMotion || busy)) kick();
+    }
+    function kick() { if (!raf && visible) raf = requestAnimationFrame(frame); }
+    new IntersectionObserver((e) => { visible = e[0].isIntersecting; lastT = 0; kick(); }).observe(view);
+  }
+  try { initLogo3D(); } catch (e) { $("#logo3d").classList.add("is-static"); }
+
+  /* ---------- Click burst: paper confetti that flips in 3D ---------- */
+  function initBurst() {
+    if (reduceMotion) return;
+    const cv = document.createElement("canvas");
+    cv.className = "fx"; cv.setAttribute("aria-hidden", "true");
+    document.body.appendChild(cv);
+    const ctx = cv.getContext("2d");
+    let dpr = 1, parts = [], rings = [], raf = 0, last = 0;
+    function size() { dpr = Math.min(devicePixelRatio || 1, 2); cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr); }
+    size();
+    addEventListener("resize", size);
+    const SHAPES = ["sq", "tri", "dot", "strip", "ring"];
+    function spawn(x, y) {
+      const cols = [T.ultra, T.pink, T.sun, T.sky, T.ink];
+      const n = 24;
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + Math.random() * 0.4, sp = 2.5 + Math.random() * 5.5;
+        parts.push({
+          x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 2.2,
+          s: 5 + Math.random() * 6, r: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.35,
+          f: Math.random() * 6.28, vf: 0.1 + Math.random() * 0.2,
+          shape: SHAPES[i % SHAPES.length], c: cols[(i * 7) % cols.length],
+          life: 1, decay: 0.013 + Math.random() * 0.012,
+        });
+      }
+      rings.push({ x, y, r: 4, life: 1 });
+      if (!raf) { last = 0; raf = requestAnimationFrame(loop); }
+    }
+    function drawPart(p) {
+      const s = p.s;
+      ctx.fillStyle = p.c; ctx.strokeStyle = p.c; ctx.lineWidth = 2;
+      switch (p.shape) {
+        case "sq": ctx.fillRect(-s / 2, -s / 2, s, s); break;
+        case "tri": ctx.beginPath(); ctx.moveTo(0, -s / 1.6); ctx.lineTo(s / 1.6, s / 2); ctx.lineTo(-s / 1.6, s / 2); ctx.closePath(); ctx.fill(); break;
+        case "dot": ctx.beginPath(); ctx.arc(0, 0, s / 2.2, 0, 7); ctx.fill(); break;
+        case "strip": ctx.fillRect(-s, -s / 5, s * 2, s / 2.5); break;
+        default: ctx.beginPath(); ctx.arc(0, 0, s / 2, 0, 7); ctx.stroke();
+      }
+    }
+    function loop(t) {
+      const dt = last ? Math.min(3, (t - last) / 16.67) : 1; last = t;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      rings = rings.filter((g) => {
+        g.r += 3 * dt; g.life -= 0.07 * dt;
+        if (g.life <= 0) return false;
+        ctx.globalAlpha = g.life; ctx.strokeStyle = T.ultra; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, 7); ctx.stroke();
+        return true;
+      });
+      parts = parts.filter((p) => {
+        const drag = Math.pow(0.955, dt);
+        p.vx *= drag; p.vy = p.vy * drag + 0.2 * dt;
+        p.x += p.vx * dt; p.y += p.vy * dt; p.r += p.vr * dt; p.f += p.vf * dt; p.life -= p.decay * dt;
+        if (p.life <= 0) return false;
+        ctx.globalAlpha = Math.min(1, p.life * 1.8);
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.scale(1, Math.cos(p.f));
+        drawPart(p);
+        ctx.restore();
+        return true;
+      });
+      ctx.globalAlpha = 1;
+      if (parts.length || rings.length) raf = requestAnimationFrame(loop);
+      else { raf = 0; ctx.clearRect(0, 0, innerWidth, innerHeight); }
+    }
+    // "click" rather than "pointerdown" so scrolling on a phone never triggers it; detail 0 means keyboard
+    addEventListener("click", (e) => { if (e.detail > 0) spawn(e.clientX, e.clientY); });
+  }
+  initBurst();
 
   /* ---------- Contact ---------- */
   const copyBtn = $("#copy-mail"), mail = $("#mail");

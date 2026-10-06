@@ -13,9 +13,26 @@ Seules la police Archivo (Google Fonts) et la bibliothèque three.js (cdnjs) son
 - **Configurateur de devis** : prix, délai et arborescence du site recalculés à chaque clic, puis envoyés dans le formulaire de contact.
 - **Démo responsive** : une poignée à faire glisser pour passer de l'affichage téléphone à l'affichage ordinateur (container queries).
 - **Maquettes en relief** : trois exemples de styles qui s'inclinent en 3D au survol.
+- **Logo en 3D** : la pile de feuilles du logo s'ouvre au survol et saute quand on clique dessus.
+- **Explosion de particules** : un clic n'importe où sur la page projette des confettis de papier qui tournent en 3D.
 - **Jauges Lighthouse** et seuils Core Web Vitals, FAQ, formulaire de contact, thème clair et sombre.
 
 Le site respecte `prefers-reduced-motion` et reste lisible au clavier.
+
+## Le logo
+
+Trois feuilles de papier découpé, éventaillées comme sur une table de stop motion. La feuille du dessus porte
+« cn » dessiné au trait et un coin plié. Les feuilles rappellent aussi les calques d'une page web, comme dans
+la scène 3D du haut de page. Dans le nom, le tiret de « cn-web » est une petite bande de papier rose.
+
+Fichiers dans `logo/` :
+
+- `cn-web-logo.svg` et `cn-web-logo.png` : logo complet, pour fond clair
+- `cn-web-logo-dark.svg` et `cn-web-logo-dark.png` : logo complet, pour fond sombre
+- `cn-web-mark.svg` et `cn-web-mark-512.png` : le symbole seul (favicon, réseaux sociaux, photo de profil)
+
+Couleurs : bleu outremer `#3B2BFF`, rose `#FF6FB5`, jaune `#FFD84D`, encre `#14143C`.
+Police du nom : Archivo, largeur 72, graisse 800 (déjà vectorisée dans les SVG).
 
 ## À personnaliser avant la mise en ligne
 
