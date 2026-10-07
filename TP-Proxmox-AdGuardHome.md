@@ -29,7 +29,7 @@ Réseau LAN : **`192.168.10.0/24`** (privé, RFC 1918), domaine interne **`pme.l
 | | | | `ens19` → **vmbr1 (LAN)** | **192.168.10.1/24** | Statique |
 | 102 | `srv-dhcp` | Serveur DHCP dédié | `ens18` → vmbr1 | **192.168.10.2/24** | Statique |
 | 103 | `srv-dns` | Résolveur AdGuardHome | `ens18` → vmbr1 | **192.168.10.3/24** | Statique |
-| 104 | `srv-web` | Serveur web on-premise (`app.pme.lan`) | `ens18` → vmbr1 | **192.168.10.10/24** | Statique |
+| 104 | `srv-web` | Serveur web on-premise (`app.pme.lan`) | `ens18` → vmbr1 | **192.168.10.4/24** | Statique |
 | 105 | `client` | Poste utilisateur (XFCE + Firefox + Wireshark) | `ens18` → vmbr1 | **192.168.10.100 à 200** | **DHCP** |
 | 100 | `debian13-base` | Template (modèle), jamais démarré en production | — | — | — |
 
@@ -60,7 +60,7 @@ Réseau LAN : **`192.168.10.0/24`** (privé, RFC 1918), domaine interne **`pme.l
  │                                │                                    │
  │  ════════ vmbr1 (bridge LAN ISOLÉ — aucun port physique, aucune IP hôte) ════════
  │       │                 │                  │                 │          │
- │  192.168.10.2      192.168.10.3      192.168.10.10    192.168.10.100-200│
+ │  192.168.10.2      192.168.10.3      192.168.10.4     192.168.10.100-200│
  │ ┌──────────┐     ┌──────────────┐    ┌──────────┐     ┌─────────────┐   │
  │ │ VM 102   │     │ VM 103       │    │ VM 104   │     │ VM 105      │   │
  │ │ srv-dhcp │     │ srv-dns      │    │ srv-web  │     │ client      │   │
@@ -71,13 +71,13 @@ Réseau LAN : **`192.168.10.0/24`** (privé, RFC 1918), domaine interne **`pme.l
  └─────────────────────────────────────────────────────────────────────────┘
 
  DHCP distribue :  IP 192.168.10.100-200 / passerelle 192.168.10.1 / DNS 192.168.10.3 / domaine pme.lan
- AdGuardHome    :  amont 1.1.1.1 + 9.9.9.9   |   réécriture  app.pme.lan → 192.168.10.10
+ AdGuardHome    :  amont 1.1.1.1 + 9.9.9.9   |   réécriture  app.pme.lan → 192.168.10.4
 ```
 
 ### 1.3 Réponses aux trois questions de conception
 
 **Q1 — Pourquoi les serveurs sont-ils en IP statique alors que le client est en DHCP ?**
-Les serveurs sont des **points de référence** : d'autres équipements les désignent par leur adresse. Le DHCP distribue « passerelle = 192.168.10.1 » et « DNS = 192.168.10.3 », et la réécriture DNS pointe vers 192.168.10.10. Si ces adresses changeaient, toute la configuration deviendrait fausse. Le serveur DHCP **ne peut pas** non plus obtenir sa propre adresse par DHCP : c'est le problème de la poule et de l'œuf. Le client, lui, n'est joint par personne à une adresse précise. Le DHCP permet de le gérer **automatiquement et à grande échelle** (centaines de postes) sans erreur de saisie ni doublon d'IP.
+Les serveurs sont des **points de référence** : d'autres équipements les désignent par leur adresse. Le DHCP distribue « passerelle = 192.168.10.1 » et « DNS = 192.168.10.3 », et la réécriture DNS pointe vers 192.168.10.4. Si ces adresses changeaient, toute la configuration deviendrait fausse. Le serveur DHCP **ne peut pas** non plus obtenir sa propre adresse par DHCP : c'est le problème de la poule et de l'œuf. Le client, lui, n'est joint par personne à une adresse précise. Le DHCP permet de le gérer **automatiquement et à grande échelle** (centaines de postes) sans erreur de saisie ni doublon d'IP.
 
 **Q2 — Le serveur DHCP et le routeur sont sur le même segment : faut-il un relais DHCP ?**
 **Non.** Un client sans adresse émet un **DHCPDISCOVER en broadcast** (`0.0.0.0 → 255.255.255.255`, MAC `ff:ff:ff:ff:ff:ff`). Ce broadcast est diffusé à tout le **domaine de diffusion** (`vmbr1`), où se trouve le serveur DHCP, qui le reçoit directement. Un **relais DHCP** (`ip helper-address`, `isc-dhcp-relay`) ne sert que si le serveur est **dans un autre sous-réseau**, car **un routeur ne transmet pas les broadcasts**. Le routeur n'intervient donc pas du tout dans l'échange DHCP.
@@ -500,7 +500,7 @@ Ouvrez ensuite `https://www.youtube.com` dans Firefox, puis, dans AdGuardHome, *
 
 ### Mission 5 — Le serveur web on-premise (VM 104)
 
-Réseau statique : `address 192.168.10.10/24`, `gateway 192.168.10.1`, `nameserver 192.168.10.3`.
+Réseau statique : `address 192.168.10.4/24`, `gateway 192.168.10.1`, `nameserver 192.168.10.3`.
 
 ```bash
 apt install -y nginx
@@ -509,7 +509,7 @@ cat > /var/www/html/index.html <<'EOF'
 <html lang="fr"><head><meta charset="utf-8"><title>Intranet PME</title></head>
 <body style="font-family:sans-serif;text-align:center;margin-top:10%">
   <h1>Application interne PME</h1>
-  <p>Servie par <b>srv-web</b> — 192.168.10.10 — hébergement on-premise</p>
+  <p>Servie par <b>srv-web</b> — 192.168.10.4 — hébergement on-premise</p>
 </body></html>
 EOF
 systemctl enable --now nginx
@@ -519,12 +519,12 @@ ss -lntp | grep ':80'
 **Preuve « joignable uniquement par l'IP »** (client) :
 
 ```bash
-curl http://192.168.10.10          # la page s'affiche
+curl http://192.168.10.4          # la page s'affiche
 dig app.pme.lan                    # status: NXDOMAIN -> le nom n'existe pas encore
 curl http://app.pme.lan            # "Could not resolve host"
 ```
 
-Faites la même vérification dans Firefox : `http://192.168.10.10` fonctionne, `http://app.pme.lan` échoue.
+Faites la même vérification dans Firefox : `http://192.168.10.4` fonctionne, `http://app.pme.lan` échoue.
 
 ### Mission 6 — La publication par le nom (AdGuardHome)
 
@@ -532,7 +532,7 @@ Faites la même vérification dans Firefox : `http://192.168.10.10` fonctionne, 
 
 | Domaine | Réponse |
 |---|---|
-| `app.pme.lan` | `192.168.10.10` |
+| `app.pme.lan` | `192.168.10.4` |
 
 Équivalent dans `/opt/AdGuardHome/AdGuardHome.yaml` (arrêtez le service avant d'éditer : `systemctl stop AdGuardHome`). L'emplacement exact varie selon la version : sur les versions récentes, la clé `rewrites` est sous `filtering:` et chaque entrée peut porter `enabled: true`.
 
@@ -540,7 +540,7 @@ Faites la même vérification dans Firefox : `http://192.168.10.10` fonctionne, 
 filtering:
   rewrites:
     - domain: app.pme.lan        # nom demandé par le client
-      answer: 192.168.10.10      # AdGuard répond lui-même avec cette IP, sans interroger l'amont
+      answer: 192.168.10.4      # AdGuard répond lui-même avec cette IP, sans interroger l'amont
 ```
 
 **Double validation (E7).** Petit script de démonstration côté client, `~/verif.sh` :
@@ -553,7 +553,7 @@ echo "== HTTP interne =="; curl -s -o /dev/null -w "%{http_code} %{remote_ip}\n"
 echo "== HTTP externe =="; curl -s -o /dev/null -w "%{http_code} %{remote_ip}\n" https://www.youtube.com
 ```
 
-Résultat attendu : `192.168.10.10`, une IP publique, `200 192.168.10.10`, puis `200 <IP publique>`.
+Résultat attendu : `192.168.10.4`, une IP publique, `200 192.168.10.4`, puis `200 <IP publique>`.
 
 Ouvrez ensuite **deux onglets Firefox côte à côte** : `http://app.pme.lan` et `https://www.youtube.com`. Prenez une capture d'écran, puis une autre du **journal AdGuard** montrant les deux requêtes : `app.pme.lan` « Réécrit » et `youtube.com` « Traité ».
 
@@ -562,7 +562,7 @@ Ouvrez ensuite **deux onglets Firefox côte à côte** : `http://app.pme.lan` et
 **À savoir expliquer : AdGuardHome ne détient pas de zone `pme.lan`.**
 
 ```bash
-dig app.pme.lan @192.168.10.3      # 192.168.10.10 : réponse fabriquée par la règle de réécriture
+dig app.pme.lan @192.168.10.3      # 192.168.10.4 : réponse fabriquée par la règle de réécriture
 dig autre.pme.lan @192.168.10.3    # NXDOMAIN, et dans le journal, "Traité par 1.1.1.1" :
                                    # le nom n'a pas de règle, il est transféré à l'amont,
                                    # et la racine répond que ".lan" n'existe pas
@@ -591,7 +591,7 @@ dig SOA pme.lan @192.168.10.3      # pas de SOA "à vous" : aucune zone n'est h�
 Filtre d'affichage utile :
 
 ```
-dhcp || arp || dns || (ip.addr == 192.168.10.10 && tcp.port == 80)
+dhcp || arp || dns || (ip.addr == 192.168.10.4 && tcp.port == 80)
 ```
 
 ### 5.2 Capture côté WAN du routeur (preuve du NAT/PAT)
@@ -630,11 +630,11 @@ conntrack -L | grep 192.168.10.
 | … | DHCP ACK | 192.168.10.2 → client | Bail confirmé : le client configure IP, passerelle et DNS |
 | … | ARP (probe / gratuitous) | client | Le client vérifie que personne d'autre n'a son IP |
 | … | ARP Request / Reply | « Who has 192.168.10.3? » | Pour envoyer sa requête DNS, le client cherche la MAC du **résolveur** (même réseau) |
-| … | DNS Query / Response | client ↔ 192.168.10.3 | `A app.pme.lan` → `192.168.10.10` (réécriture AdGuard) |
-| … | ARP Request / Reply | « Who has 192.168.10.10? » | Le serveur web est **local** : le client cherche **sa** MAC |
-| … | TCP SYN, SYN/ACK, ACK | client ↔ 192.168.10.10:80 | Poignée de main TCP en 3 temps |
-| … | HTTP GET / | client → 192.168.10.10 | Requête de la page (`Host: app.pme.lan`) |
-| … | HTTP 200 OK | 192.168.10.10 → client | La page est servie |
+| … | DNS Query / Response | client ↔ 192.168.10.3 | `A app.pme.lan` → `192.168.10.4` (réécriture AdGuard) |
+| … | ARP Request / Reply | « Who has 192.168.10.4? » | Le serveur web est **local** : le client cherche **sa** MAC |
+| … | TCP SYN, SYN/ACK, ACK | client ↔ 192.168.10.4:80 | Poignée de main TCP en 3 temps |
+| … | HTTP GET / | client → 192.168.10.4 | Requête de la page (`Host: app.pme.lan`) |
+| … | HTTP 200 OK | 192.168.10.4 → client | La page est servie |
 | … | DNS Query / Response | client ↔ 192.168.10.3 | `A www.youtube.com` → IP publique (transférée à l'amont) |
 | … | ARP Request / Reply | « Who has 192.168.10.1? » | YouTube est **distant** : le client cherche la MAC de la **passerelle** |
 | … | TCP SYN → IP YouTube :443 | client → IP publique | La trame Ethernet porte la **MAC du routeur**, mais le paquet IP porte l'**IP de YouTube** |
@@ -645,7 +645,7 @@ Dans Wireshark, faites `Clic droit sur un paquet → Packet Comment` pour annote
 
 Le client fait un **ET logique** entre l'IP de destination et son masque /24 :
 
-- `192.168.10.10` est **dans** `192.168.10.0/24`. C'est une **livraison directe** : le client émet `ARP Who has 192.168.10.10?`, et la trame part directement à la MAC du serveur web. **Le routeur n'est pas traversé.**
+- `192.168.10.4` est **dans** `192.168.10.0/24`. C'est une **livraison directe** : le client émet `ARP Who has 192.168.10.4?`, et la trame part directement à la MAC du serveur web. **Le routeur n'est pas traversé.**
 - L'IP de YouTube est **hors** du réseau, donc le client consulte sa table de routage : `default via 192.168.10.1`. C'est une **livraison indirecte** : il émet `ARP Who has 192.168.10.1?` et envoie la trame à la **MAC du routeur**, avec **l'IP de YouTube** dans l'en-tête IP. L'ARP ne fonctionne **que dans le domaine de diffusion local**. On ne peut jamais obtenir la MAC d'un serveur YouTube.
 
 ---
@@ -653,10 +653,10 @@ Le client fait un **ET logique** entre l'IP de destination et son masque /24 :
 ## 6. Préparation de la soutenance : réponses aux 5 questions
 
 **1. Pourquoi le client cherche-t-il la MAC du serveur web pour `app.pme.lan`, mais celle de la passerelle pour YouTube ?**
-Voir le § 5.4. `192.168.10.10` est sur le même sous-réseau (même /24), donc la livraison est directe et le client fait un ARP sur la cible. YouTube est hors sous-réseau, donc la livraison passe par la route par défaut et le client fait un ARP sur le **next-hop** 192.168.10.1. Les adresses IP restent de bout en bout. Les adresses MAC changent à chaque saut.
+Voir le § 5.4. `192.168.10.4` est sur le même sous-réseau (même /24), donc la livraison est directe et le client fait un ARP sur la cible. YouTube est hors sous-réseau, donc la livraison passe par la route par défaut et le client fait un ARP sur le **next-hop** 192.168.10.1. Les adresses IP restent de bout en bout. Les adresses MAC changent à chaque saut.
 
 **2. Le DHCP a-t-il résolu `app.pme.lan` ?**
-**Non.** Le DHCP n'a fait que **configurer** le client : IP, masque, passerelle, **adresse du DNS (option 6)** et suffixe `pme.lan`. La résolution est faite **plus tard, par AdGuardHome** (192.168.10.3), grâce à une **règle de réécriture DNS**. Le client envoie `A? app.pme.lan` en UDP/53, et AdGuard répond lui-même `192.168.10.10` **sans interroger l'amont**. On le voit dans le journal (« Réécrit ») et dans Wireshark (paquets DNS entre le client et .3).
+**Non.** Le DHCP n'a fait que **configurer** le client : IP, masque, passerelle, **adresse du DNS (option 6)** et suffixe `pme.lan`. La résolution est faite **plus tard, par AdGuardHome** (192.168.10.3), grâce à une **règle de réécriture DNS**. Le client envoie `A? app.pme.lan` en UDP/53, et AdGuard répond lui-même `192.168.10.4` **sans interroger l'amont**. On le voit dans le journal (« Réécrit ») et dans Wireshark (paquets DNS entre le client et .3).
 
 **3. Quelle différence entre AdGuardHome (forwarder + réécriture) et bind9 (autoritaire) ?**
 
@@ -679,9 +679,9 @@ Ouvrez `nat-lan.pcapng` et `nat-wan.pcapng` (§ 5.2), et repérez **le même SYN
 L'IP source a été remplacée (**NAT**) et le port sert d'identifiant de session (**PAT**). La réponse revient vers l'IP WAN, et le routeur la retraduit vers le client grâce à `conntrack`. La capture du client seule **ne peut pas** prouver le NAT, puisqu'elle ne voit que des adresses privées.
 
 **5. Si on arrête le serveur web en gardant la réécriture : que répond le DNS ? Et le navigateur ?**
-- **DNS** : il répond toujours `app.pme.lan → 192.168.10.10`. AdGuard applique une règle statique et **ne vérifie pas** que le service est vivant. Le DNS est un **annuaire**, pas une sonde.
+- **DNS** : il répond toujours `app.pme.lan → 192.168.10.4`. AdGuard applique une règle statique et **ne vérifie pas** que le service est vivant. Le DNS est un **annuaire**, pas une sonde.
 - **Navigateur** : il affiche une **erreur**, pour une raison qui dépend de ce qui est arrêté :
-  - **VM éteinte** : l'ARP `Who has 192.168.10.10?` reste sans réponse et le SYN n'est jamais envoyé. On obtient « délai dépassé » ou « No route to host ».
+  - **VM éteinte** : l'ARP `Who has 192.168.10.4?` reste sans réponse et le SYN n'est jamais envoyé. On obtient « délai dépassé » ou « No route to host ».
   - **nginx seul arrêté** : l'ARP répond et le SYN arrive, mais le noyau du serveur renvoie un **TCP RST** car aucun processus n'écoute sur le port 80. On obtient « La connexion a échoué » (*connection refused*).
 - **Pourquoi cette différence** : la résolution de noms (couche application, DNS) et la disponibilité du service (couches 2 à 4 et 7 vers le serveur) sont **indépendantes**. Un nom résolu ne garantit pas un service joignable.
 
