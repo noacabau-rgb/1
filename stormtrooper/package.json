@@ -1,0 +1,12 @@
+{
+  "name": "stormtrooper-3d",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "export": "node export.mjs"
+  },
+  "dependencies": {
+    "three": "0.160.0"
+  }
+}

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stormtrooper 3D</title>
+  <style>
+    :root { --bg: #0b0b0d; --fg: #e8e8e8; --btn: #1f2024; --btn-h: #2c2e33; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font: 14px system-ui, sans-serif; overflow: hidden; }
+    canvas { display: block; }
+    #ui { position: fixed; left: 16px; top: 16px; display: flex; flex-wrap: wrap; gap: 8px; max-width: calc(100vw - 32px); }
+    button { background: var(--btn); color: var(--fg); border: 1px solid #3a3c42; border-radius: 6px; padding: 6px 10px; cursor: pointer; font: inherit; }
+    button:hover { background: var(--btn-h); }
+    #hint { position: fixed; left: 16px; bottom: 12px; opacity: .6; font-size: 12px; }
+  </style>
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    } }
+  </script>
+</head>
+<body>
+  <div id="ui">
+    <button id="rot">Rotation auto</button>
+    <button id="glb">Exporter .glb</button>
+    <button id="stl">Exporter .stl</button>
+    <button id="obj">Exporter .obj</button>
+  </div>
+  <div id="hint">Clic gauche : tourner · molette : zoom · clic droit : déplacer</div>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+    import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+    import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+    import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
+    import { buildStormtrooper } from './stormtrooper.js';
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b0b0d);
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+    const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.05, 50);
+    camera.position.set(0.9, 1.25, 4.2);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0.95, 0);
+    controls.enableDamping = true;
+
+    const key = new THREE.DirectionalLight(0xffffff, 2.2);
+    key.position.set(2, 4, 3);
+    key.castShadow = true;
+    key.shadow.bias = -0.0004;
+    key.shadow.normalBias = 0.02;
+    key.shadow.mapSize.set(2048, 2048);
+    Object.assign(key.shadow.camera, { left: -1.5, right: 1.5, top: 2.5, bottom: -0.5 });
+    scene.add(key);
+    const rim = new THREE.DirectionalLight(0xbcd0ff, 1.2);
+    rim.position.set(-3, 2, -3);
+    scene.add(rim);
+
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(2.5, 64), new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.9 }));
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const trooper = buildStormtrooper(THREE);
+    scene.add(trooper);
+
+    let autoRotate = new URLSearchParams(location.search).get('rotate') !== '0';
+    document.getElementById('rot').onclick = () => { autoRotate = !autoRotate; };
+
+    function download(data, name, type) {
+      const url = URL.createObjectURL(new Blob([data], { type }));
+      const a = Object.assign(document.createElement('a'), { href: url, download: name });
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    document.getElementById('glb').onclick = () =>
+      new GLTFExporter().parse(trooper, (r) => download(r, 'stormtrooper.glb', 'model/gltf-binary'), console.error, { binary: true });
+    document.getElementById('stl').onclick = () =>
+      download(new STLExporter().parse(trooper, { binary: true }), 'stormtrooper.stl', 'model/stl');
+    document.getElementById('obj').onclick = () =>
+      download(new OBJExporter().parse(trooper), 'stormtrooper.obj', 'text/plain');
+
+    addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+
+    renderer.setAnimationLoop(() => {
+      if (autoRotate) trooper.rotation.y += 0.004;
+      controls.update();
+      renderer.render(scene, camera);
+    });
+    window.__viewer = { camera, controls, trooper };
+  </script>
+</body>
+</html>
