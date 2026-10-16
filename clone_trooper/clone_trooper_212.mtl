@@ -1,0 +1,42 @@
+newmtl blanc
+Kd 0.920 0.910 0.880
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 40
+d 1
+
+newmtl orange
+Kd 0.910 0.580 0.160
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 40
+d 1
+
+newmtl noir
+Kd 0.050 0.050 0.060
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 40
+d 1
+
+newmtl gris
+Kd 0.220 0.220 0.240
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 40
+d 1
+
+newmtl metal
+Kd 0.120 0.120 0.130
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 40
+d 1
+
+newmtl visiere
+Kd 0.020 0.020 0.030
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 40
+d 1
+
